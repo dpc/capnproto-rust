@@ -7,7 +7,8 @@ pub mod Node {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{FromStructBuilder, FromStructReader};
+  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
 
@@ -15,12 +16,16 @@ pub mod Node {
     layout::StructSize { data : 5, pointers : 5, preferred_list_encoding : layout::InlineComposite};
 
 
-  pub struct Reader<'a> { reader : layout::StructReader<'a> }
+  pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
   impl <'a> layout::FromStructReader<'a> for Reader<'a> {
     fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
       Reader { reader : reader }
     }
+  }
+
+  impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+    fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
   }
 
   impl <'a> Reader<'a> {
@@ -29,8 +34,8 @@ pub mod Node {
       self.reader.get_data_field::<u64>(0)
     }
     #[inline]
-    pub fn get_display_name(&self) -> Text::Reader<'a> {
-      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+    pub fn get_display_name(&self) -> DecodeResult<Text::Reader<'a>> {
+      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
     }
     pub fn has_display_name(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -44,53 +49,53 @@ pub mod Node {
       self.reader.get_data_field::<u64>(2)
     }
     #[inline]
-    pub fn get_nested_nodes(&self) -> StructList::Reader<'a,schema_capnp::Node::NestedNode::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Node::NestedNode::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+    pub fn get_nested_nodes(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::Node::NestedNode::Reader<'a>>> {
+      Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(1).get_list(schema_capnp::Node::NestedNode::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
     }
     pub fn has_nested_nodes(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
     }
     #[inline]
-    pub fn get_annotations(&self) -> StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(2).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+    pub fn get_annotations(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>> {
+      Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(2).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
     }
     pub fn has_annotations(&self) -> bool {
       !self.reader.get_pointer_field(2).is_null()
     }
     #[inline]
-    pub fn which(&self) -> std::option::Option<WhichReader<'a>> {
+    pub fn which(&self) -> DecodeResult<WhichReader<'a>> {
       match self.reader.get_data_field::<u16>(6) {
         0 => {
-          return std::option::Some(File(
+          return Ok(File(
             ()
           ));
         }
         1 => {
-          return std::option::Some(Struct(
+          return Ok(Struct(
             FromStructReader::new(self.reader)
           ));
         }
         2 => {
-          return std::option::Some(Enum(
+          return Ok(Enum(
             FromStructReader::new(self.reader)
           ));
         }
         3 => {
-          return std::option::Some(Interface(
+          return Ok(Interface(
             FromStructReader::new(self.reader)
           ));
         }
         4 => {
-          return std::option::Some(Const(
+          return Ok(Const(
             FromStructReader::new(self.reader)
           ));
         }
         5 => {
-          return std::option::Some(Annotation(
+          return Ok(Annotation(
             FromStructReader::new(self.reader)
           ));
         }
-        _ => return std::option::None
+        d => return Err(UnsupportedVariant(d))
       }
     }
   }
@@ -118,8 +123,8 @@ pub mod Node {
       self.builder.set_data_field::<u64>(0, value);
     }
     #[inline]
-    pub fn get_display_name(&self) -> Text::Builder<'a> {
-      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+    pub fn get_display_name(&self) -> DecodeResult<Text::Builder<'a>> {
+      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
     }
     #[inline]
     pub fn set_display_name(&self, value : Text::Reader) {
@@ -149,8 +154,8 @@ pub mod Node {
       self.builder.set_data_field::<u64>(2, value);
     }
     #[inline]
-    pub fn get_nested_nodes(&self) -> StructList::Builder<'a,schema_capnp::Node::NestedNode::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Node::NestedNode::STRUCT_SIZE, std::ptr::null()).unwrap())
+    pub fn get_nested_nodes(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::Node::NestedNode::Builder<'a>>> {
+      Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Node::NestedNode::STRUCT_SIZE, std::ptr::null()))))
     }
     #[inline]
     pub fn set_nested_nodes(&self, value : StructList::Reader<'a,schema_capnp::Node::NestedNode::Reader<'a>>) {
@@ -165,8 +170,8 @@ pub mod Node {
       !self.builder.get_pointer_field(1).is_null()
     }
     #[inline]
-    pub fn get_annotations(&self) -> StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(2).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()).unwrap())
+    pub fn get_annotations(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>>> {
+      Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(2).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()))))
     }
     #[inline]
     pub fn set_annotations(&self, value : StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>) {
@@ -235,39 +240,39 @@ pub mod Node {
       FromStructBuilder::new(self.builder)
     }
     #[inline]
-    pub fn which(&self) -> std::option::Option<WhichBuilder<'a>> {
+    pub fn which(&self) -> DecodeResult<WhichBuilder<'a>> {
       match self.builder.get_data_field::<u16>(6) {
         0 => {
-          return std::option::Some(File(
+          return Ok(File(
             ()
           ));
         }
         1 => {
-          return std::option::Some(Struct(
+          return Ok(Struct(
             FromStructBuilder::new(self.builder)
           ));
         }
         2 => {
-          return std::option::Some(Enum(
+          return Ok(Enum(
             FromStructBuilder::new(self.builder)
           ));
         }
         3 => {
-          return std::option::Some(Interface(
+          return Ok(Interface(
             FromStructBuilder::new(self.builder)
           ));
         }
         4 => {
-          return std::option::Some(Const(
+          return Ok(Const(
             FromStructBuilder::new(self.builder)
           ));
         }
         5 => {
-          return std::option::Some(Annotation(
+          return Ok(Annotation(
             FromStructBuilder::new(self.builder)
           ));
         }
-        _ => return std::option::None
+        d => return Err(UnsupportedVariant(d))
       }
     }
   }
@@ -297,7 +302,8 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
@@ -305,7 +311,7 @@ pub mod Node {
       layout::StructSize { data : 1, pointers : 1, preferred_list_encoding : layout::InlineComposite};
 
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -313,10 +319,14 @@ pub mod Node {
       }
     }
 
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+    }
+
     impl <'a> Reader<'a> {
       #[inline]
-      pub fn get_name(&self) -> Text::Reader<'a> {
-        self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+      pub fn get_name(&self) -> DecodeResult<Text::Reader<'a>> {
+        self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
       }
       pub fn has_name(&self) -> bool {
         !self.reader.get_pointer_field(0).is_null()
@@ -342,8 +352,8 @@ pub mod Node {
         FromStructReader::new(self.builder.as_reader())
       }
       #[inline]
-      pub fn get_name(&self) -> Text::Builder<'a> {
-        self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+      pub fn get_name(&self) -> DecodeResult<Text::Builder<'a>> {
+        self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
       }
       #[inline]
       pub fn set_name(&self, value : Text::Reader) {
@@ -382,16 +392,21 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
         Reader { reader : reader }
       }
+    }
+
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
     }
 
     impl <'a> Reader<'a> {
@@ -420,8 +435,8 @@ pub mod Node {
         self.reader.get_data_field::<u32>(8)
       }
       #[inline]
-      pub fn get_fields(&self) -> StructList::Reader<'a,schema_capnp::Field::Reader<'a>> {
-        StructList::Reader::new(self.reader.get_pointer_field(3).get_list(schema_capnp::Field::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+      pub fn get_fields(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::Field::Reader<'a>>> {
+        Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(3).get_list(schema_capnp::Field::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
       }
       pub fn has_fields(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -487,8 +502,8 @@ pub mod Node {
         self.builder.set_data_field::<u32>(8, value);
       }
       #[inline]
-      pub fn get_fields(&self) -> StructList::Builder<'a,schema_capnp::Field::Builder<'a>> {
-        StructList::Builder::new(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Field::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_fields(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::Field::Builder<'a>>> {
+        Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Field::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_fields(&self, value : StructList::Reader<'a,schema_capnp::Field::Reader<'a>>) {
@@ -520,11 +535,12 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -532,10 +548,14 @@ pub mod Node {
       }
     }
 
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+    }
+
     impl <'a> Reader<'a> {
       #[inline]
-      pub fn get_enumerants(&self) -> StructList::Reader<'a,schema_capnp::Enumerant::Reader<'a>> {
-        StructList::Reader::new(self.reader.get_pointer_field(3).get_list(schema_capnp::Enumerant::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+      pub fn get_enumerants(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::Enumerant::Reader<'a>>> {
+        Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(3).get_list(schema_capnp::Enumerant::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
       }
       pub fn has_enumerants(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -553,8 +573,8 @@ pub mod Node {
         FromStructReader::new(self.builder.as_reader())
       }
       #[inline]
-      pub fn get_enumerants(&self) -> StructList::Builder<'a,schema_capnp::Enumerant::Builder<'a>> {
-        StructList::Builder::new(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Enumerant::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_enumerants(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::Enumerant::Builder<'a>>> {
+        Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Enumerant::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_enumerants(&self, value : StructList::Reader<'a,schema_capnp::Enumerant::Reader<'a>>) {
@@ -586,11 +606,12 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -598,17 +619,21 @@ pub mod Node {
       }
     }
 
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+    }
+
     impl <'a> Reader<'a> {
       #[inline]
-      pub fn get_methods(&self) -> StructList::Reader<'a,schema_capnp::Method::Reader<'a>> {
-        StructList::Reader::new(self.reader.get_pointer_field(3).get_list(schema_capnp::Method::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+      pub fn get_methods(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::Method::Reader<'a>>> {
+        Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(3).get_list(schema_capnp::Method::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
       }
       pub fn has_methods(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
       }
       #[inline]
-      pub fn get_extends(&self) -> PrimitiveList::Reader<'a,u64> {
-        PrimitiveList::Reader::new(self.reader.get_pointer_field(4).get_list(layout::EightBytes, std::ptr::null()).unwrap())
+      pub fn get_extends(&self) -> DecodeResult<PrimitiveList::Reader<'a,u64>> {
+        Ok(PrimitiveList::Reader::new(try!(self.reader.get_pointer_field(4).get_list(layout::EightBytes, std::ptr::null()))))
       }
       pub fn has_extends(&self) -> bool {
         !self.reader.get_pointer_field(4).is_null()
@@ -626,8 +651,8 @@ pub mod Node {
         FromStructReader::new(self.builder.as_reader())
       }
       #[inline]
-      pub fn get_methods(&self) -> StructList::Builder<'a,schema_capnp::Method::Builder<'a>> {
-        StructList::Builder::new(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Method::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_methods(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::Method::Builder<'a>>> {
+        Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Method::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_methods(&self, value : StructList::Reader<'a,schema_capnp::Method::Reader<'a>>) {
@@ -642,8 +667,8 @@ pub mod Node {
         !self.builder.get_pointer_field(3).is_null()
       }
       #[inline]
-      pub fn get_extends(&self) -> PrimitiveList::Builder<'a,u64> {
-        PrimitiveList::Builder::new(self.builder.get_pointer_field(4).get_list(layout::EightBytes, std::ptr::null()).unwrap())
+      pub fn get_extends(&self) -> DecodeResult<PrimitiveList::Builder<'a,u64>> {
+        Ok(PrimitiveList::Builder::new(try!(self.builder.get_pointer_field(4).get_list(layout::EightBytes, std::ptr::null()))))
       }
       #[inline]
       pub fn set_extends(&self, value : PrimitiveList::Reader<'a,u64>) {
@@ -676,11 +701,12 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -688,17 +714,21 @@ pub mod Node {
       }
     }
 
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+    }
+
     impl <'a> Reader<'a> {
       #[inline]
-      pub fn get_type(&self) -> schema_capnp::Type::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(3).get_struct( std::ptr::null()).unwrap())
+      pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Reader<'a>> {
+        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(3).get_struct( std::ptr::null()))))
       }
       pub fn has_type(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
       }
       #[inline]
-      pub fn get_value(&self) -> schema_capnp::Value::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(4).get_struct( std::ptr::null()).unwrap())
+      pub fn get_value(&self) -> DecodeResult<schema_capnp::Value::Reader<'a>> {
+        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(4).get_struct( std::ptr::null()))))
       }
       pub fn has_value(&self) -> bool {
         !self.reader.get_pointer_field(4).is_null()
@@ -716,12 +746,12 @@ pub mod Node {
         FromStructReader::new(self.builder.as_reader())
       }
       #[inline]
-      pub fn get_type(&self) -> schema_capnp::Type::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Builder<'a>> {
+        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_type(&self, value : schema_capnp::Type::Reader) {
-        self.builder.get_pointer_field(3).set_struct(&value.reader)
+        self.builder.get_pointer_field(3).set_struct(&value.struct_reader())
       }
       #[inline]
       pub fn init_type(&self, ) -> schema_capnp::Type::Builder<'a> {
@@ -731,12 +761,12 @@ pub mod Node {
         !self.builder.get_pointer_field(3).is_null()
       }
       #[inline]
-      pub fn get_value(&self) -> schema_capnp::Value::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(4).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_value(&self) -> DecodeResult<schema_capnp::Value::Builder<'a>> {
+        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(4).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_value(&self, value : schema_capnp::Value::Reader) {
-        self.builder.get_pointer_field(4).set_struct(&value.reader)
+        self.builder.get_pointer_field(4).set_struct(&value.struct_reader())
       }
       #[inline]
       pub fn init_value(&self, ) -> schema_capnp::Value::Builder<'a> {
@@ -769,11 +799,12 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -781,10 +812,14 @@ pub mod Node {
       }
     }
 
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+    }
+
     impl <'a> Reader<'a> {
       #[inline]
-      pub fn get_type(&self) -> schema_capnp::Type::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(3).get_struct( std::ptr::null()).unwrap())
+      pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Reader<'a>> {
+        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(3).get_struct( std::ptr::null()))))
       }
       pub fn has_type(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -850,12 +885,12 @@ pub mod Node {
         FromStructReader::new(self.builder.as_reader())
       }
       #[inline]
-      pub fn get_type(&self) -> schema_capnp::Type::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Builder<'a>> {
+        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_type(&self, value : schema_capnp::Type::Reader) {
-        self.builder.get_pointer_field(3).set_struct(&value.reader)
+        self.builder.get_pointer_field(3).set_struct(&value.struct_reader())
       }
       #[inline]
       pub fn init_type(&self, ) -> schema_capnp::Type::Builder<'a> {
@@ -982,7 +1017,8 @@ pub mod Field {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{FromStructBuilder, FromStructReader};
+  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
 
@@ -990,7 +1026,7 @@ pub mod Field {
     layout::StructSize { data : 3, pointers : 4, preferred_list_encoding : layout::InlineComposite};
 
 
-  pub struct Reader<'a> { reader : layout::StructReader<'a> }
+  pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
   impl <'a> layout::FromStructReader<'a> for Reader<'a> {
     fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -998,10 +1034,14 @@ pub mod Field {
     }
   }
 
+  impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+    fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+  }
+
   impl <'a> Reader<'a> {
     #[inline]
-    pub fn get_name(&self) -> Text::Reader<'a> {
-      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+    pub fn get_name(&self) -> DecodeResult<Text::Reader<'a>> {
+      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
     }
     pub fn has_name(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -1011,8 +1051,8 @@ pub mod Field {
       self.reader.get_data_field::<u16>(0)
     }
     #[inline]
-    pub fn get_annotations(&self) -> StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+    pub fn get_annotations(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>> {
+      Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
     }
     pub fn has_annotations(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
@@ -1026,19 +1066,19 @@ pub mod Field {
       FromStructReader::new(self.reader)
     }
     #[inline]
-    pub fn which(&self) -> std::option::Option<WhichReader<'a>> {
+    pub fn which(&self) -> DecodeResult<WhichReader<'a>> {
       match self.reader.get_data_field::<u16>(4) {
         0 => {
-          return std::option::Some(Slot(
+          return Ok(Slot(
             FromStructReader::new(self.reader)
           ));
         }
         1 => {
-          return std::option::Some(Group(
+          return Ok(Group(
             FromStructReader::new(self.reader)
           ));
         }
-        _ => return std::option::None
+        d => return Err(UnsupportedVariant(d))
       }
     }
   }
@@ -1058,8 +1098,8 @@ pub mod Field {
       FromStructReader::new(self.builder.as_reader())
     }
     #[inline]
-    pub fn get_name(&self) -> Text::Builder<'a> {
-      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+    pub fn get_name(&self) -> DecodeResult<Text::Builder<'a>> {
+      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
     }
     #[inline]
     pub fn set_name(&self, value : Text::Reader) {
@@ -1081,8 +1121,8 @@ pub mod Field {
       self.builder.set_data_field::<u16>(0, value);
     }
     #[inline]
-    pub fn get_annotations(&self) -> StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()).unwrap())
+    pub fn get_annotations(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>>> {
+      Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()))))
     }
     #[inline]
     pub fn set_annotations(&self, value : StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>) {
@@ -1130,19 +1170,19 @@ pub mod Field {
       FromStructBuilder::new(self.builder)
     }
     #[inline]
-    pub fn which(&self) -> std::option::Option<WhichBuilder<'a>> {
+    pub fn which(&self) -> DecodeResult<WhichBuilder<'a>> {
       match self.builder.get_data_field::<u16>(4) {
         0 => {
-          return std::option::Some(Slot(
+          return Ok(Slot(
             FromStructBuilder::new(self.builder)
           ));
         }
         1 => {
-          return std::option::Some(Group(
+          return Ok(Group(
             FromStructBuilder::new(self.builder)
           ));
         }
-        _ => return std::option::None
+        d => return Err(UnsupportedVariant(d))
       }
     }
   }
@@ -1172,16 +1212,21 @@ pub mod Field {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
         Reader { reader : reader }
       }
+    }
+
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
     }
 
     impl <'a> Reader<'a> {
@@ -1190,15 +1235,15 @@ pub mod Field {
         self.reader.get_data_field::<u32>(1)
       }
       #[inline]
-      pub fn get_type(&self) -> schema_capnp::Type::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(2).get_struct( std::ptr::null()).unwrap())
+      pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Reader<'a>> {
+        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(2).get_struct( std::ptr::null()))))
       }
       pub fn has_type(&self) -> bool {
         !self.reader.get_pointer_field(2).is_null()
       }
       #[inline]
-      pub fn get_default_value(&self) -> schema_capnp::Value::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(3).get_struct( std::ptr::null()).unwrap())
+      pub fn get_default_value(&self) -> DecodeResult<schema_capnp::Value::Reader<'a>> {
+        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(3).get_struct( std::ptr::null()))))
       }
       pub fn has_default_value(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -1228,12 +1273,12 @@ pub mod Field {
         self.builder.set_data_field::<u32>(1, value);
       }
       #[inline]
-      pub fn get_type(&self) -> schema_capnp::Type::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(2).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Builder<'a>> {
+        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(2).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_type(&self, value : schema_capnp::Type::Reader) {
-        self.builder.get_pointer_field(2).set_struct(&value.reader)
+        self.builder.get_pointer_field(2).set_struct(&value.struct_reader())
       }
       #[inline]
       pub fn init_type(&self, ) -> schema_capnp::Type::Builder<'a> {
@@ -1243,12 +1288,12 @@ pub mod Field {
         !self.builder.get_pointer_field(2).is_null()
       }
       #[inline]
-      pub fn get_default_value(&self) -> schema_capnp::Value::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(3).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_default_value(&self) -> DecodeResult<schema_capnp::Value::Builder<'a>> {
+        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(3).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_default_value(&self, value : schema_capnp::Value::Reader) {
-        self.builder.get_pointer_field(3).set_struct(&value.reader)
+        self.builder.get_pointer_field(3).set_struct(&value.struct_reader())
       }
       #[inline]
       pub fn init_default_value(&self, ) -> schema_capnp::Value::Builder<'a> {
@@ -1289,16 +1334,21 @@ pub mod Field {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
         Reader { reader : reader }
       }
+    }
+
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
     }
 
     impl <'a> Reader<'a> {
@@ -1344,11 +1394,12 @@ pub mod Field {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -1356,21 +1407,25 @@ pub mod Field {
       }
     }
 
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+    }
+
     impl <'a> Reader<'a> {
       #[inline]
-      pub fn which(&self) -> std::option::Option<WhichReader> {
+      pub fn which(&self) -> DecodeResult<WhichReader> {
         match self.reader.get_data_field::<u16>(5) {
           0 => {
-            return std::option::Some(Implicit(
+            return Ok(Implicit(
               ()
             ));
           }
           1 => {
-            return std::option::Some(Explicit(
+            return Ok(Explicit(
               self.reader.get_data_field::<u16>(6)
             ));
           }
-          _ => return std::option::None
+          d => return Err(UnsupportedVariant(d))
         }
       }
     }
@@ -1395,19 +1450,19 @@ pub mod Field {
         self.builder.set_data_field::<u16>(6, value);
       }
       #[inline]
-      pub fn which(&self) -> std::option::Option<WhichBuilder> {
+      pub fn which(&self) -> DecodeResult<WhichBuilder> {
         match self.builder.get_data_field::<u16>(5) {
           0 => {
-            return std::option::Some(Implicit(
+            return Ok(Implicit(
               ()
             ));
           }
           1 => {
-            return std::option::Some(Explicit(
+            return Ok(Explicit(
               self.builder.get_data_field::<u16>(6)
             ));
           }
-          _ => return std::option::None
+          d => return Err(UnsupportedVariant(d))
         }
       }
     }
@@ -1435,7 +1490,8 @@ pub mod Enumerant {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{FromStructBuilder, FromStructReader};
+  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
 
@@ -1443,7 +1499,7 @@ pub mod Enumerant {
     layout::StructSize { data : 1, pointers : 2, preferred_list_encoding : layout::InlineComposite};
 
 
-  pub struct Reader<'a> { reader : layout::StructReader<'a> }
+  pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
   impl <'a> layout::FromStructReader<'a> for Reader<'a> {
     fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -1451,10 +1507,14 @@ pub mod Enumerant {
     }
   }
 
+  impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+    fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+  }
+
   impl <'a> Reader<'a> {
     #[inline]
-    pub fn get_name(&self) -> Text::Reader<'a> {
-      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+    pub fn get_name(&self) -> DecodeResult<Text::Reader<'a>> {
+      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
     }
     pub fn has_name(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -1464,8 +1524,8 @@ pub mod Enumerant {
       self.reader.get_data_field::<u16>(0)
     }
     #[inline]
-    pub fn get_annotations(&self) -> StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+    pub fn get_annotations(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>> {
+      Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
     }
     pub fn has_annotations(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
@@ -1487,8 +1547,8 @@ pub mod Enumerant {
       FromStructReader::new(self.builder.as_reader())
     }
     #[inline]
-    pub fn get_name(&self) -> Text::Builder<'a> {
-      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+    pub fn get_name(&self) -> DecodeResult<Text::Builder<'a>> {
+      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
     }
     #[inline]
     pub fn set_name(&self, value : Text::Reader) {
@@ -1510,8 +1570,8 @@ pub mod Enumerant {
       self.builder.set_data_field::<u16>(0, value);
     }
     #[inline]
-    pub fn get_annotations(&self) -> StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()).unwrap())
+    pub fn get_annotations(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>>> {
+      Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()))))
     }
     #[inline]
     pub fn set_annotations(&self, value : StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>) {
@@ -1543,7 +1603,8 @@ pub mod Method {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{FromStructBuilder, FromStructReader};
+  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
 
@@ -1551,7 +1612,7 @@ pub mod Method {
     layout::StructSize { data : 3, pointers : 2, preferred_list_encoding : layout::InlineComposite};
 
 
-  pub struct Reader<'a> { reader : layout::StructReader<'a> }
+  pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
   impl <'a> layout::FromStructReader<'a> for Reader<'a> {
     fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -1559,10 +1620,14 @@ pub mod Method {
     }
   }
 
+  impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+    fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+  }
+
   impl <'a> Reader<'a> {
     #[inline]
-    pub fn get_name(&self) -> Text::Reader<'a> {
-      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+    pub fn get_name(&self) -> DecodeResult<Text::Reader<'a>> {
+      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
     }
     pub fn has_name(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -1580,8 +1645,8 @@ pub mod Method {
       self.reader.get_data_field::<u64>(2)
     }
     #[inline]
-    pub fn get_annotations(&self) -> StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+    pub fn get_annotations(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>> {
+      Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
     }
     pub fn has_annotations(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
@@ -1603,8 +1668,8 @@ pub mod Method {
       FromStructReader::new(self.builder.as_reader())
     }
     #[inline]
-    pub fn get_name(&self) -> Text::Builder<'a> {
-      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+    pub fn get_name(&self) -> DecodeResult<Text::Builder<'a>> {
+      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
     }
     #[inline]
     pub fn set_name(&self, value : Text::Reader) {
@@ -1642,8 +1707,8 @@ pub mod Method {
       self.builder.set_data_field::<u64>(2, value);
     }
     #[inline]
-    pub fn get_annotations(&self) -> StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()).unwrap())
+    pub fn get_annotations(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>>> {
+      Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()))))
     }
     #[inline]
     pub fn set_annotations(&self, value : StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>) {
@@ -1675,7 +1740,8 @@ pub mod Type {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{FromStructBuilder, FromStructReader};
+  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
 
@@ -1683,7 +1749,7 @@ pub mod Type {
     layout::StructSize { data : 2, pointers : 1, preferred_list_encoding : layout::InlineComposite};
 
 
-  pub struct Reader<'a> { reader : layout::StructReader<'a> }
+  pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
   impl <'a> layout::FromStructReader<'a> for Reader<'a> {
     fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -1691,106 +1757,110 @@ pub mod Type {
     }
   }
 
+  impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+    fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+  }
+
   impl <'a> Reader<'a> {
     #[inline]
-    pub fn which(&self) -> std::option::Option<WhichReader<'a>> {
+    pub fn which(&self) -> DecodeResult<WhichReader<'a>> {
       match self.reader.get_data_field::<u16>(0) {
         0 => {
-          return std::option::Some(Void(
+          return Ok(Void(
             ()
           ));
         }
         1 => {
-          return std::option::Some(Bool(
+          return Ok(Bool(
             ()
           ));
         }
         2 => {
-          return std::option::Some(Int8(
+          return Ok(Int8(
             ()
           ));
         }
         3 => {
-          return std::option::Some(Int16(
+          return Ok(Int16(
             ()
           ));
         }
         4 => {
-          return std::option::Some(Int32(
+          return Ok(Int32(
             ()
           ));
         }
         5 => {
-          return std::option::Some(Int64(
+          return Ok(Int64(
             ()
           ));
         }
         6 => {
-          return std::option::Some(Uint8(
+          return Ok(Uint8(
             ()
           ));
         }
         7 => {
-          return std::option::Some(Uint16(
+          return Ok(Uint16(
             ()
           ));
         }
         8 => {
-          return std::option::Some(Uint32(
+          return Ok(Uint32(
             ()
           ));
         }
         9 => {
-          return std::option::Some(Uint64(
+          return Ok(Uint64(
             ()
           ));
         }
         10 => {
-          return std::option::Some(Float32(
+          return Ok(Float32(
             ()
           ));
         }
         11 => {
-          return std::option::Some(Float64(
+          return Ok(Float64(
             ()
           ));
         }
         12 => {
-          return std::option::Some(Text(
+          return Ok(Text(
             ()
           ));
         }
         13 => {
-          return std::option::Some(Data(
+          return Ok(Data(
             ()
           ));
         }
         14 => {
-          return std::option::Some(List(
+          return Ok(List(
             FromStructReader::new(self.reader)
           ));
         }
         15 => {
-          return std::option::Some(Enum(
+          return Ok(Enum(
             FromStructReader::new(self.reader)
           ));
         }
         16 => {
-          return std::option::Some(Struct(
+          return Ok(Struct(
             FromStructReader::new(self.reader)
           ));
         }
         17 => {
-          return std::option::Some(Interface(
+          return Ok(Interface(
             FromStructReader::new(self.reader)
           ));
         }
         18 => {
-          return std::option::Some(AnyPointer(
+          return Ok(AnyPointer(
             ()
           ));
         }
-        _ => return std::option::None
+        d => return Err(UnsupportedVariant(d))
       }
     }
   }
@@ -1894,104 +1964,104 @@ pub mod Type {
       self.builder.set_data_field::<u16>(0, 18);
     }
     #[inline]
-    pub fn which(&self) -> std::option::Option<WhichBuilder<'a>> {
+    pub fn which(&self) -> DecodeResult<WhichBuilder<'a>> {
       match self.builder.get_data_field::<u16>(0) {
         0 => {
-          return std::option::Some(Void(
+          return Ok(Void(
             ()
           ));
         }
         1 => {
-          return std::option::Some(Bool(
+          return Ok(Bool(
             ()
           ));
         }
         2 => {
-          return std::option::Some(Int8(
+          return Ok(Int8(
             ()
           ));
         }
         3 => {
-          return std::option::Some(Int16(
+          return Ok(Int16(
             ()
           ));
         }
         4 => {
-          return std::option::Some(Int32(
+          return Ok(Int32(
             ()
           ));
         }
         5 => {
-          return std::option::Some(Int64(
+          return Ok(Int64(
             ()
           ));
         }
         6 => {
-          return std::option::Some(Uint8(
+          return Ok(Uint8(
             ()
           ));
         }
         7 => {
-          return std::option::Some(Uint16(
+          return Ok(Uint16(
             ()
           ));
         }
         8 => {
-          return std::option::Some(Uint32(
+          return Ok(Uint32(
             ()
           ));
         }
         9 => {
-          return std::option::Some(Uint64(
+          return Ok(Uint64(
             ()
           ));
         }
         10 => {
-          return std::option::Some(Float32(
+          return Ok(Float32(
             ()
           ));
         }
         11 => {
-          return std::option::Some(Float64(
+          return Ok(Float64(
             ()
           ));
         }
         12 => {
-          return std::option::Some(Text(
+          return Ok(Text(
             ()
           ));
         }
         13 => {
-          return std::option::Some(Data(
+          return Ok(Data(
             ()
           ));
         }
         14 => {
-          return std::option::Some(List(
+          return Ok(List(
             FromStructBuilder::new(self.builder)
           ));
         }
         15 => {
-          return std::option::Some(Enum(
+          return Ok(Enum(
             FromStructBuilder::new(self.builder)
           ));
         }
         16 => {
-          return std::option::Some(Struct(
+          return Ok(Struct(
             FromStructBuilder::new(self.builder)
           ));
         }
         17 => {
-          return std::option::Some(Interface(
+          return Ok(Interface(
             FromStructBuilder::new(self.builder)
           ));
         }
         18 => {
-          return std::option::Some(AnyPointer(
+          return Ok(AnyPointer(
             ()
           ));
         }
-        _ => return std::option::None
+        d => return Err(UnsupportedVariant(d))
       }
     }
   }
@@ -2034,11 +2104,12 @@ pub mod Type {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -2046,10 +2117,14 @@ pub mod Type {
       }
     }
 
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+    }
+
     impl <'a> Reader<'a> {
       #[inline]
-      pub fn get_element_type(&self) -> schema_capnp::Type::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(0).get_struct( std::ptr::null()).unwrap())
+      pub fn get_element_type(&self) -> DecodeResult<schema_capnp::Type::Reader<'a>> {
+        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(0).get_struct( std::ptr::null()))))
       }
       pub fn has_element_type(&self) -> bool {
         !self.reader.get_pointer_field(0).is_null()
@@ -2067,12 +2142,12 @@ pub mod Type {
         FromStructReader::new(self.builder.as_reader())
       }
       #[inline]
-      pub fn get_element_type(&self) -> schema_capnp::Type::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(0).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_element_type(&self) -> DecodeResult<schema_capnp::Type::Builder<'a>> {
+        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(0).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_element_type(&self, value : schema_capnp::Type::Reader) {
-        self.builder.get_pointer_field(0).set_struct(&value.reader)
+        self.builder.get_pointer_field(0).set_struct(&value.struct_reader())
       }
       #[inline]
       pub fn init_element_type(&self, ) -> schema_capnp::Type::Builder<'a> {
@@ -2102,16 +2177,21 @@ pub mod Type {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
         Reader { reader : reader }
       }
+    }
+
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
     }
 
     impl <'a> Reader<'a> {
@@ -2157,16 +2237,21 @@ pub mod Type {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
         Reader { reader : reader }
       }
+    }
+
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
     }
 
     impl <'a> Reader<'a> {
@@ -2212,16 +2297,21 @@ pub mod Type {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
         Reader { reader : reader }
       }
+    }
+
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
     }
 
     impl <'a> Reader<'a> {
@@ -2268,7 +2358,8 @@ pub mod Value {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{FromStructBuilder, FromStructReader};
+  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
 
@@ -2276,12 +2367,16 @@ pub mod Value {
     layout::StructSize { data : 2, pointers : 1, preferred_list_encoding : layout::InlineComposite};
 
 
-  pub struct Reader<'a> { reader : layout::StructReader<'a> }
+  pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
   impl <'a> layout::FromStructReader<'a> for Reader<'a> {
     fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
       Reader { reader : reader }
     }
+  }
+
+  impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+    fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
   }
 
   impl <'a> Reader<'a> {
@@ -2306,104 +2401,104 @@ pub mod Value {
       !self.reader.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn which(&self) -> std::option::Option<WhichReader<'a>> {
+    pub fn which(&self) -> DecodeResult<WhichReader<'a>> {
       match self.reader.get_data_field::<u16>(0) {
         0 => {
-          return std::option::Some(Void(
+          return Ok(Void(
             ()
           ));
         }
         1 => {
-          return std::option::Some(Bool(
+          return Ok(Bool(
             self.reader.get_bool_field(16)
           ));
         }
         2 => {
-          return std::option::Some(Int8(
+          return Ok(Int8(
             self.reader.get_data_field::<i8>(2)
           ));
         }
         3 => {
-          return std::option::Some(Int16(
+          return Ok(Int16(
             self.reader.get_data_field::<i16>(1)
           ));
         }
         4 => {
-          return std::option::Some(Int32(
+          return Ok(Int32(
             self.reader.get_data_field::<i32>(1)
           ));
         }
         5 => {
-          return std::option::Some(Int64(
+          return Ok(Int64(
             self.reader.get_data_field::<i64>(1)
           ));
         }
         6 => {
-          return std::option::Some(Uint8(
+          return Ok(Uint8(
             self.reader.get_data_field::<u8>(2)
           ));
         }
         7 => {
-          return std::option::Some(Uint16(
+          return Ok(Uint16(
             self.reader.get_data_field::<u16>(1)
           ));
         }
         8 => {
-          return std::option::Some(Uint32(
+          return Ok(Uint32(
             self.reader.get_data_field::<u32>(1)
           ));
         }
         9 => {
-          return std::option::Some(Uint64(
+          return Ok(Uint64(
             self.reader.get_data_field::<u64>(1)
           ));
         }
         10 => {
-          return std::option::Some(Float32(
+          return Ok(Float32(
             self.reader.get_data_field::<f32>(1)
           ));
         }
         11 => {
-          return std::option::Some(Float64(
+          return Ok(Float64(
             self.reader.get_data_field::<f64>(1)
           ));
         }
         12 => {
-          return std::option::Some(Text(
-            self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+          return Ok(Text(
+            self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
           ));
         }
         13 => {
-          return std::option::Some(Data(
-            self.reader.get_pointer_field(0).get_data(std::ptr::null(), 0).unwrap()
+          return Ok(Data(
+            self.reader.get_pointer_field(0).get_data(std::ptr::null(), 0)
           ));
         }
         14 => {
-          return std::option::Some(List(
+          return Ok(List(
             AnyPointer::Reader::new(self.reader.get_pointer_field(0))
           ));
         }
         15 => {
-          return std::option::Some(Enum(
+          return Ok(Enum(
             self.reader.get_data_field::<u16>(1)
           ));
         }
         16 => {
-          return std::option::Some(Struct(
+          return Ok(Struct(
             AnyPointer::Reader::new(self.reader.get_pointer_field(0))
           ));
         }
         17 => {
-          return std::option::Some(Interface(
+          return Ok(Interface(
             ()
           ));
         }
         18 => {
-          return std::option::Some(AnyPointer(
+          return Ok(AnyPointer(
             AnyPointer::Reader::new(self.reader.get_pointer_field(0))
           ));
         }
-        _ => return std::option::None
+        d => return Err(UnsupportedVariant(d))
       }
     }
   }
@@ -2552,104 +2647,104 @@ pub mod Value {
       !self.builder.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn which(&self) -> std::option::Option<WhichBuilder<'a>> {
+    pub fn which(&self) -> DecodeResult<WhichBuilder<'a>> {
       match self.builder.get_data_field::<u16>(0) {
         0 => {
-          return std::option::Some(Void(
+          return Ok(Void(
             ()
           ));
         }
         1 => {
-          return std::option::Some(Bool(
+          return Ok(Bool(
             self.builder.get_bool_field(16)
           ));
         }
         2 => {
-          return std::option::Some(Int8(
+          return Ok(Int8(
             self.builder.get_data_field::<i8>(2)
           ));
         }
         3 => {
-          return std::option::Some(Int16(
+          return Ok(Int16(
             self.builder.get_data_field::<i16>(1)
           ));
         }
         4 => {
-          return std::option::Some(Int32(
+          return Ok(Int32(
             self.builder.get_data_field::<i32>(1)
           ));
         }
         5 => {
-          return std::option::Some(Int64(
+          return Ok(Int64(
             self.builder.get_data_field::<i64>(1)
           ));
         }
         6 => {
-          return std::option::Some(Uint8(
+          return Ok(Uint8(
             self.builder.get_data_field::<u8>(2)
           ));
         }
         7 => {
-          return std::option::Some(Uint16(
+          return Ok(Uint16(
             self.builder.get_data_field::<u16>(1)
           ));
         }
         8 => {
-          return std::option::Some(Uint32(
+          return Ok(Uint32(
             self.builder.get_data_field::<u32>(1)
           ));
         }
         9 => {
-          return std::option::Some(Uint64(
+          return Ok(Uint64(
             self.builder.get_data_field::<u64>(1)
           ));
         }
         10 => {
-          return std::option::Some(Float32(
+          return Ok(Float32(
             self.builder.get_data_field::<f32>(1)
           ));
         }
         11 => {
-          return std::option::Some(Float64(
+          return Ok(Float64(
             self.builder.get_data_field::<f64>(1)
           ));
         }
         12 => {
-          return std::option::Some(Text(
-            self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+          return Ok(Text(
+            self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
           ));
         }
         13 => {
-          return std::option::Some(Data(
-            self.builder.get_pointer_field(0).get_data(std::ptr::null(), 0).unwrap()
+          return Ok(Data(
+            self.builder.get_pointer_field(0).get_data(std::ptr::null(), 0)
           ));
         }
         14 => {
-          return std::option::Some(List(
+          return Ok(List(
             AnyPointer::Builder::new(self.builder.get_pointer_field(0))
           ));
         }
         15 => {
-          return std::option::Some(Enum(
+          return Ok(Enum(
             self.builder.get_data_field::<u16>(1)
           ));
         }
         16 => {
-          return std::option::Some(Struct(
+          return Ok(Struct(
             AnyPointer::Builder::new(self.builder.get_pointer_field(0))
           ));
         }
         17 => {
-          return std::option::Some(Interface(
+          return Ok(Interface(
             ()
           ));
         }
         18 => {
-          return std::option::Some(AnyPointer(
+          return Ok(AnyPointer(
             AnyPointer::Builder::new(self.builder.get_pointer_field(0))
           ));
         }
-        _ => return std::option::None
+        d => return Err(UnsupportedVariant(d))
       }
     }
   }
@@ -2683,8 +2778,8 @@ pub mod Value {
     Interface(()),
     AnyPointer(A4),
   }
-  pub type WhichReader<'a> = Which<'a,Text::Reader<'a>,Data::Reader<'a>,AnyPointer::Reader<'a>,AnyPointer::Reader<'a>,AnyPointer::Reader<'a>>;
-  pub type WhichBuilder<'a> = Which<'a,Text::Builder<'a>,Data::Builder<'a>,AnyPointer::Builder<'a>,AnyPointer::Builder<'a>,AnyPointer::Builder<'a>>;
+  pub type WhichReader<'a> = Which<'a,DecodeResult<Text::Reader<'a>>,DecodeResult<Data::Reader<'a>>,AnyPointer::Reader<'a>,AnyPointer::Reader<'a>,AnyPointer::Reader<'a>>;
+  pub type WhichBuilder<'a> = Which<'a,DecodeResult<Text::Builder<'a>>,DecodeResult<Data::Builder<'a>>,AnyPointer::Builder<'a>,AnyPointer::Builder<'a>,AnyPointer::Builder<'a>>;
 }
 
 pub mod Annotation {
@@ -2693,7 +2788,8 @@ pub mod Annotation {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{FromStructBuilder, FromStructReader};
+  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
 
@@ -2701,12 +2797,16 @@ pub mod Annotation {
     layout::StructSize { data : 1, pointers : 1, preferred_list_encoding : layout::InlineComposite};
 
 
-  pub struct Reader<'a> { reader : layout::StructReader<'a> }
+  pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
   impl <'a> layout::FromStructReader<'a> for Reader<'a> {
     fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
       Reader { reader : reader }
     }
+  }
+
+  impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+    fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
   }
 
   impl <'a> Reader<'a> {
@@ -2715,8 +2815,8 @@ pub mod Annotation {
       self.reader.get_data_field::<u64>(0)
     }
     #[inline]
-    pub fn get_value(&self) -> schema_capnp::Value::Reader<'a> {
-      FromStructReader::new(self.reader.get_pointer_field(0).get_struct( std::ptr::null()).unwrap())
+    pub fn get_value(&self) -> DecodeResult<schema_capnp::Value::Reader<'a>> {
+      Ok(FromStructReader::new(try!(self.reader.get_pointer_field(0).get_struct( std::ptr::null()))))
     }
     pub fn has_value(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -2746,12 +2846,12 @@ pub mod Annotation {
       self.builder.set_data_field::<u64>(0, value);
     }
     #[inline]
-    pub fn get_value(&self) -> schema_capnp::Value::Builder<'a> {
-      FromStructBuilder::new(self.builder.get_pointer_field(0).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()).unwrap())
+    pub fn get_value(&self) -> DecodeResult<schema_capnp::Value::Builder<'a>> {
+      Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(0).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()))))
     }
     #[inline]
     pub fn set_value(&self, value : schema_capnp::Value::Reader) {
-      self.builder.get_pointer_field(0).set_struct(&value.reader)
+      self.builder.get_pointer_field(0).set_struct(&value.struct_reader())
     }
     #[inline]
     pub fn init_value(&self, ) -> schema_capnp::Value::Builder<'a> {
@@ -2803,7 +2903,8 @@ pub mod CodeGeneratorRequest {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{FromStructBuilder, FromStructReader};
+  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
 
@@ -2811,7 +2912,7 @@ pub mod CodeGeneratorRequest {
     layout::StructSize { data : 0, pointers : 2, preferred_list_encoding : layout::InlineComposite};
 
 
-  pub struct Reader<'a> { reader : layout::StructReader<'a> }
+  pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
   impl <'a> layout::FromStructReader<'a> for Reader<'a> {
     fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
@@ -2819,17 +2920,21 @@ pub mod CodeGeneratorRequest {
     }
   }
 
+  impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+    fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
+  }
+
   impl <'a> Reader<'a> {
     #[inline]
-    pub fn get_nodes(&self) -> StructList::Reader<'a,schema_capnp::Node::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(0).get_list(schema_capnp::Node::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+    pub fn get_nodes(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::Node::Reader<'a>>> {
+      Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(0).get_list(schema_capnp::Node::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
     }
     pub fn has_nodes(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn get_requested_files(&self) -> StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::CodeGeneratorRequest::RequestedFile::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+    pub fn get_requested_files(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Reader<'a>>> {
+      Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(1).get_list(schema_capnp::CodeGeneratorRequest::RequestedFile::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
     }
     pub fn has_requested_files(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
@@ -2851,8 +2956,8 @@ pub mod CodeGeneratorRequest {
       FromStructReader::new(self.builder.as_reader())
     }
     #[inline]
-    pub fn get_nodes(&self) -> StructList::Builder<'a,schema_capnp::Node::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(0).get_struct_list(schema_capnp::Node::STRUCT_SIZE, std::ptr::null()).unwrap())
+    pub fn get_nodes(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::Node::Builder<'a>>> {
+      Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(0).get_struct_list(schema_capnp::Node::STRUCT_SIZE, std::ptr::null()))))
     }
     #[inline]
     pub fn set_nodes(&self, value : StructList::Reader<'a,schema_capnp::Node::Reader<'a>>) {
@@ -2867,8 +2972,8 @@ pub mod CodeGeneratorRequest {
       !self.builder.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn get_requested_files(&self) -> StructList::Builder<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::CodeGeneratorRequest::RequestedFile::STRUCT_SIZE, std::ptr::null()).unwrap())
+    pub fn get_requested_files(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Builder<'a>>> {
+      Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::CodeGeneratorRequest::RequestedFile::STRUCT_SIZE, std::ptr::null()))))
     }
     #[inline]
     pub fn set_requested_files(&self, value : StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Reader<'a>>) {
@@ -2899,7 +3004,8 @@ pub mod CodeGeneratorRequest {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{FromStructBuilder, FromStructReader};
+    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
 
@@ -2907,12 +3013,16 @@ pub mod CodeGeneratorRequest {
       layout::StructSize { data : 1, pointers : 2, preferred_list_encoding : layout::InlineComposite};
 
 
-    pub struct Reader<'a> { reader : layout::StructReader<'a> }
+    pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
     impl <'a> layout::FromStructReader<'a> for Reader<'a> {
       fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
         Reader { reader : reader }
       }
+    }
+
+    impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+      fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
     }
 
     impl <'a> Reader<'a> {
@@ -2921,15 +3031,15 @@ pub mod CodeGeneratorRequest {
         self.reader.get_data_field::<u64>(0)
       }
       #[inline]
-      pub fn get_filename(&self) -> Text::Reader<'a> {
-        self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+      pub fn get_filename(&self) -> DecodeResult<Text::Reader<'a>> {
+        self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
       }
       pub fn has_filename(&self) -> bool {
         !self.reader.get_pointer_field(0).is_null()
       }
       #[inline]
-      pub fn get_imports(&self) -> StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Import::Reader<'a>> {
-        StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::CodeGeneratorRequest::RequestedFile::Import::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
+      pub fn get_imports(&self) -> DecodeResult<StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Import::Reader<'a>>> {
+        Ok(StructList::Reader::new(try!(self.reader.get_pointer_field(1).get_list(schema_capnp::CodeGeneratorRequest::RequestedFile::Import::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))
       }
       pub fn has_imports(&self) -> bool {
         !self.reader.get_pointer_field(1).is_null()
@@ -2959,8 +3069,8 @@ pub mod CodeGeneratorRequest {
         self.builder.set_data_field::<u64>(0, value);
       }
       #[inline]
-      pub fn get_filename(&self) -> Text::Builder<'a> {
-        self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+      pub fn get_filename(&self) -> DecodeResult<Text::Builder<'a>> {
+        self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
       }
       #[inline]
       pub fn set_filename(&self, value : Text::Reader) {
@@ -2974,8 +3084,8 @@ pub mod CodeGeneratorRequest {
         !self.builder.get_pointer_field(0).is_null()
       }
       #[inline]
-      pub fn get_imports(&self) -> StructList::Builder<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Import::Builder<'a>> {
-        StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::CodeGeneratorRequest::RequestedFile::Import::STRUCT_SIZE, std::ptr::null()).unwrap())
+      pub fn get_imports(&self) -> DecodeResult<StructList::Builder<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Import::Builder<'a>>> {
+        Ok(StructList::Builder::new(try!(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::CodeGeneratorRequest::RequestedFile::Import::STRUCT_SIZE, std::ptr::null()))))
       }
       #[inline]
       pub fn set_imports(&self, value : StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Import::Reader<'a>>) {
@@ -3006,7 +3116,8 @@ pub mod CodeGeneratorRequest {
       use capnp::capability::{FromClientHook, FromTypelessPipeline};
       use capnp::blob::{Text, Data};
       use capnp::layout;
-      use capnp::layout::{FromStructBuilder, FromStructReader};
+      use capnp::layout::{DecodeResult, UnsupportedVariant};
+      use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
       use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
       use schema_capnp;
 
@@ -3014,12 +3125,16 @@ pub mod CodeGeneratorRequest {
         layout::StructSize { data : 1, pointers : 1, preferred_list_encoding : layout::InlineComposite};
 
 
-      pub struct Reader<'a> { reader : layout::StructReader<'a> }
+      pub struct Reader<'a> { priv reader : layout::StructReader<'a> }
 
       impl <'a> layout::FromStructReader<'a> for Reader<'a> {
         fn new(reader: layout::StructReader<'a>) -> Reader<'a> {
           Reader { reader : reader }
         }
+      }
+
+      impl <'a> layout::ToStructReader<'a> for Reader<'a> {
+        fn struct_reader(&self) -> layout::StructReader<'a> { self.reader }
       }
 
       impl <'a> Reader<'a> {
@@ -3028,8 +3143,8 @@ pub mod CodeGeneratorRequest {
           self.reader.get_data_field::<u64>(0)
         }
         #[inline]
-        pub fn get_name(&self) -> Text::Reader<'a> {
-          self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+        pub fn get_name(&self) -> DecodeResult<Text::Reader<'a>> {
+          self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
         }
         pub fn has_name(&self) -> bool {
           !self.reader.get_pointer_field(0).is_null()
@@ -3059,8 +3174,8 @@ pub mod CodeGeneratorRequest {
           self.builder.set_data_field::<u64>(0, value);
         }
         #[inline]
-        pub fn get_name(&self) -> Text::Builder<'a> {
-          self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
+        pub fn get_name(&self) -> DecodeResult<Text::Builder<'a>> {
+          self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
         }
         #[inline]
         pub fn set_name(&self, value : Text::Reader) {
