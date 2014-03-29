@@ -153,7 +153,7 @@ macro_rules! pass_by_bytes(
                     &mut capnp::io::ArrayInputStream::new(requestBytes.as_slice()),
                     capnp::message::DefaultReaderOptions);
 
-                let requestReader : $testcase::RequestReader = messageReader.get_root();
+                let requestReader : $testcase::RequestReader = messageReader.get_root().unwrap();
                 $testcase::handle_request(requestReader, response).unwrap();
 
                 {
@@ -165,7 +165,7 @@ macro_rules! pass_by_bytes(
                     &mut capnp::io::ArrayInputStream::new(responseBytes.as_slice()),
                     capnp::message::DefaultReaderOptions);
 
-                let responseReader : $testcase::ResponseReader = messageReader.get_root();
+                let responseReader : $testcase::ResponseReader = messageReader.get_root().unwrap();
                 if !$testcase::check_response(responseReader, expected) {
                     fail!("Incorrect response.");
                 }
@@ -184,7 +184,7 @@ macro_rules! server(
                 let messageReader = $compression::new_buffered_reader(
                     &mut inBuffered,
                     capnp::message::DefaultReaderOptions);
-                let requestReader : $testcase::RequestReader = messageReader.get_root();
+                let requestReader : $testcase::RequestReader = messageReader.get_root().unwrap();
                 $testcase::handle_request(requestReader, response).unwrap();
 
                 $compression::write_buffered(&mut outBuffered, &messageRes);
@@ -210,7 +210,7 @@ macro_rules! sync_client(
                 let messageReader = $compression::new_buffered_reader(
                     &mut inBuffered,
                     capnp::message::DefaultReaderOptions);
-                let responseReader : $testcase::ResponseReader = messageReader.get_root();
+                let responseReader : $testcase::ResponseReader = messageReader.get_root().unwrap();
                 assert!($testcase::check_response(responseReader, expected));
 
             }

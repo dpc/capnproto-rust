@@ -691,14 +691,14 @@ pub mod Node {
     impl <'a> Reader<'a> {
       #[inline]
       pub fn get_type(&self) -> schema_capnp::Type::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(3).get_struct( std::ptr::null()))
+        FromStructReader::new(self.reader.get_pointer_field(3).get_struct( std::ptr::null()).unwrap())
       }
       pub fn has_type(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
       }
       #[inline]
       pub fn get_value(&self) -> schema_capnp::Value::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(4).get_struct( std::ptr::null()))
+        FromStructReader::new(self.reader.get_pointer_field(4).get_struct( std::ptr::null()).unwrap())
       }
       pub fn has_value(&self) -> bool {
         !self.reader.get_pointer_field(4).is_null()
@@ -717,7 +717,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_type(&self) -> schema_capnp::Type::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))
+        FromStructBuilder::new(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_type(&self, value : schema_capnp::Type::Reader) {
@@ -732,7 +732,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_value(&self) -> schema_capnp::Value::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(4).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()))
+        FromStructBuilder::new(self.builder.get_pointer_field(4).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_value(&self, value : schema_capnp::Value::Reader) {
@@ -784,7 +784,7 @@ pub mod Node {
     impl <'a> Reader<'a> {
       #[inline]
       pub fn get_type(&self) -> schema_capnp::Type::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(3).get_struct( std::ptr::null()))
+        FromStructReader::new(self.reader.get_pointer_field(3).get_struct( std::ptr::null()).unwrap())
       }
       pub fn has_type(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -851,7 +851,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_type(&self) -> schema_capnp::Type::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))
+        FromStructBuilder::new(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_type(&self, value : schema_capnp::Type::Reader) {
@@ -1191,14 +1191,14 @@ pub mod Field {
       }
       #[inline]
       pub fn get_type(&self) -> schema_capnp::Type::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(2).get_struct( std::ptr::null()))
+        FromStructReader::new(self.reader.get_pointer_field(2).get_struct( std::ptr::null()).unwrap())
       }
       pub fn has_type(&self) -> bool {
         !self.reader.get_pointer_field(2).is_null()
       }
       #[inline]
       pub fn get_default_value(&self) -> schema_capnp::Value::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(3).get_struct( std::ptr::null()))
+        FromStructReader::new(self.reader.get_pointer_field(3).get_struct( std::ptr::null()).unwrap())
       }
       pub fn has_default_value(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -1229,7 +1229,7 @@ pub mod Field {
       }
       #[inline]
       pub fn get_type(&self) -> schema_capnp::Type::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(2).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))
+        FromStructBuilder::new(self.builder.get_pointer_field(2).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_type(&self, value : schema_capnp::Type::Reader) {
@@ -1244,7 +1244,7 @@ pub mod Field {
       }
       #[inline]
       pub fn get_default_value(&self) -> schema_capnp::Value::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(3).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()))
+        FromStructBuilder::new(self.builder.get_pointer_field(3).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_default_value(&self, value : schema_capnp::Value::Reader) {
@@ -2049,7 +2049,7 @@ pub mod Type {
     impl <'a> Reader<'a> {
       #[inline]
       pub fn get_element_type(&self) -> schema_capnp::Type::Reader<'a> {
-        FromStructReader::new(self.reader.get_pointer_field(0).get_struct( std::ptr::null()))
+        FromStructReader::new(self.reader.get_pointer_field(0).get_struct( std::ptr::null()).unwrap())
       }
       pub fn has_element_type(&self) -> bool {
         !self.reader.get_pointer_field(0).is_null()
@@ -2068,7 +2068,7 @@ pub mod Type {
       }
       #[inline]
       pub fn get_element_type(&self) -> schema_capnp::Type::Builder<'a> {
-        FromStructBuilder::new(self.builder.get_pointer_field(0).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))
+        FromStructBuilder::new(self.builder.get_pointer_field(0).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_element_type(&self, value : schema_capnp::Type::Reader) {
@@ -2375,7 +2375,7 @@ pub mod Value {
         }
         13 => {
           return std::option::Some(Data(
-            self.reader.get_pointer_field(0).get_data(std::ptr::null(), 0)
+            self.reader.get_pointer_field(0).get_data(std::ptr::null(), 0).unwrap()
           ));
         }
         14 => {
@@ -2621,7 +2621,7 @@ pub mod Value {
         }
         13 => {
           return std::option::Some(Data(
-            self.builder.get_pointer_field(0).get_data(std::ptr::null(), 0)
+            self.builder.get_pointer_field(0).get_data(std::ptr::null(), 0).unwrap()
           ));
         }
         14 => {
@@ -2716,7 +2716,7 @@ pub mod Annotation {
     }
     #[inline]
     pub fn get_value(&self) -> schema_capnp::Value::Reader<'a> {
-      FromStructReader::new(self.reader.get_pointer_field(0).get_struct( std::ptr::null()))
+      FromStructReader::new(self.reader.get_pointer_field(0).get_struct( std::ptr::null()).unwrap())
     }
     pub fn has_value(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -2747,7 +2747,7 @@ pub mod Annotation {
     }
     #[inline]
     pub fn get_value(&self) -> schema_capnp::Value::Builder<'a> {
-      FromStructBuilder::new(self.builder.get_pointer_field(0).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()))
+      FromStructBuilder::new(self.builder.get_pointer_field(0).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()).unwrap())
     }
     #[inline]
     pub fn set_value(&self, value : schema_capnp::Value::Reader) {

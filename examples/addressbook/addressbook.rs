@@ -48,7 +48,7 @@ pub mod addressbook {
     pub fn print_address_book() -> IoResult<()> {
 
         let message_reader = try!(serialize_packed::new_reader_unbuffered(&mut stdin(), DefaultReaderOptions));
-        let address_book = message_reader.get_root::<AddressBook::Reader>();
+        let address_book = message_reader.get_root::<AddressBook::Reader>().unwrap();
         let people = address_book.get_people();
 
         for i in range(0, people.size()) {

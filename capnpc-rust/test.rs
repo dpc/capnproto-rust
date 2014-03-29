@@ -134,7 +134,7 @@ mod tests {
         assert_eq!(test_blob_reader.has_data_field(), true);
 
         assert_eq!(test_blob_reader.get_text_field().unwrap(), "abcdefghi");
-        assert!(test_blob_reader.get_data_field() == [0u8, 1u8, 2u8, 3u8, 4u8]);
+        assert!(test_blob_reader.get_data_field().unwrap() == [0u8, 1u8, 2u8, 3u8, 4u8]);
 
         let text_builder = test_blob.init_text_field(10);
         assert_eq!(test_blob.as_reader().get_text_field().unwrap(),
@@ -143,7 +143,7 @@ mod tests {
         writer.write("aabbccddee".as_bytes()).unwrap();
 
         let data_builder = test_blob.init_data_field(7);
-        assert!(test_blob.as_reader().get_data_field() ==
+        assert!(test_blob.as_reader().get_data_field().unwrap() ==
                 [0u8,0u8,0u8,0u8,0u8,0u8,0u8]);
         for c in data_builder.mut_iter() {
             *c = 5;
@@ -151,15 +151,15 @@ mod tests {
         data_builder[0] = 4u8;
 
         assert_eq!(test_blob.as_reader().get_text_field().unwrap(), "aabbccddee");
-        assert!(test_blob.as_reader().get_data_field() == [4u8,5u8,5u8,5u8,5u8,5u8,5u8]);
+        assert!(test_blob.as_reader().get_data_field().unwrap() == [4u8,5u8,5u8,5u8,5u8,5u8,5u8]);
 
         let bytes = test_blob.get_text_field().unwrap().as_mut_bytes();
         bytes[4] = 'z' as u8;
         bytes[5] = 'z' as u8;
         assert_eq!(test_blob.as_reader().get_text_field().unwrap(), "aabbzzddee");
 
-        test_blob.get_data_field()[2] = 10;
-        assert!(test_blob.as_reader().get_data_field() == [4u8,5u8,10u8,5u8,5u8,5u8,5u8]);
+        test_blob.get_data_field().unwrap()[2] = 10;
+        assert!(test_blob.as_reader().get_data_field().unwrap() == [4u8,5u8,10u8,5u8,5u8,5u8,5u8]);
     }
 
 
@@ -192,7 +192,7 @@ mod tests {
         assert_eq!(bigStructReader.get_int8_field(), -128);
         assert_eq!(bigStructReader.get_int32_field(), 1009);
 
-        let innerReader = bigStructReader.get_struct_field();
+        let innerReader = bigStructReader.get_struct_field().unwrap();
         assert!(!innerReader.get_bool_field_a());
         assert!(innerReader.get_bool_field_b());
         assert_eq!(innerReader.get_float64_field(), 0.1234567);
@@ -278,8 +278,8 @@ mod tests {
 
         let data_list = complex_list_reader.get_data_list();
         assert_eq!(data_list.size(), 2);
-        assert!(data_list[0] == [0u8, 1u8, 2u8]);
-        assert!(data_list[1] == [255u8, 254u8, 253u8]);
+        assert!(data_list[0].unwrap() == [0u8, 1u8, 2u8]);
+        assert!(data_list[1].unwrap() == [255u8, 254u8, 253u8]);
 
         let prim_list_list = complex_list_reader.get_prim_list_list();
         assert_eq!(prim_list_list.size(), 2);
@@ -303,7 +303,7 @@ mod tests {
         assert!(enum_list_list[1][1] == Some(AnEnum::Qux));
 
         assert!(complex_list_reader.get_text_list_list()[0][0].unwrap() == "abc");
-        assert!(complex_list_reader.get_data_list_list()[0][0] == [255, 254, 253]);
+        assert!(complex_list_reader.get_data_list_list()[0][0].unwrap() == [255, 254, 253]);
 
         assert!(complex_list_reader.get_struct_list_list()[0][0].get_int8_field() == -1);
     }
@@ -371,24 +371,24 @@ mod tests {
 
         struct_field.set_uint64_field(-7);
         assert_eq!(struct_field.get_uint64_field(), -7);
-        assert_eq!(big_struct.get_struct_field().get_uint64_field(), -7);
+        assert_eq!(big_struct.get_struct_field().unwrap().get_uint64_field(), -7);
         let struct_field = big_struct.init_struct_field();
         assert_eq!(struct_field.get_uint64_field(), 0);
         assert_eq!(struct_field.get_uint32_field(), 0);
 
         // getting before init is the same as init
-        let other_struct_field = big_struct.get_another_struct_field();
+        let other_struct_field = big_struct.get_another_struct_field().unwrap();
         assert_eq!(other_struct_field.get_uint64_field(), 0);
         other_struct_field.set_uint32_field(-31);
 
         let reader = other_struct_field.as_reader();
         big_struct.set_struct_field(reader);
-        assert_eq!(big_struct.get_struct_field().get_uint32_field(), -31);
+        assert_eq!(big_struct.get_struct_field().unwrap().get_uint32_field(), -31);
         assert_eq!(other_struct_field.get_uint32_field(), -31);
         other_struct_field.set_uint32_field(42);
-        assert_eq!(big_struct.get_struct_field().get_uint32_field(), -31);
+        assert_eq!(big_struct.get_struct_field().unwrap().get_uint32_field(), -31);
         assert_eq!(other_struct_field.get_uint32_field(), 42);
-        assert_eq!(big_struct.get_another_struct_field().get_uint32_field(), 42);
+        assert_eq!(big_struct.get_another_struct_field().unwrap().get_uint32_field(), 42);
     }
 
     #[test]
@@ -445,7 +445,7 @@ mod tests {
         let struct1 = message1.init_root::<TestBigStruct::Builder>();
         struct1.set_uint8_field(3);
         message2.set_root(&struct1.as_reader());
-        let struct2 = message2.get_root::<TestBigStruct::Builder>();
+        let struct2 = message2.get_root::<TestBigStruct::Builder>().unwrap();
 
         assert_eq!(struct2.get_uint8_field(), 3u8);
     }

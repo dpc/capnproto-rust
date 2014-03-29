@@ -51,13 +51,13 @@ fn make_expression(rng : &mut FastRand, exp : Expression::Builder, depth : u32) 
 fn evaluate_expression(exp : Expression::Reader) -> i32 {
     let left = match exp.get_left().which() {
         Ok(Expression::Left::Value(v)) => v,
-        Ok(Expression::Left::Expression(e)) => evaluate_expression(e),
-        Err(_) => fail!("impossible")
+        Ok(Expression::Left::Expression(Ok(e))) => evaluate_expression(e),
+        _ => fail!("impossible")
     };
     let right = match exp.get_right().which() {
         Ok(Expression::Right::Value(v)) => v,
-        Ok(Expression::Right::Expression(e)) => evaluate_expression(e),
-        Err(_) => fail!("impossible")
+        Ok(Expression::Right::Expression(Ok(e))) => evaluate_expression(e),
+        _ => fail!("impossible")
     };
 
     match exp.get_op() {

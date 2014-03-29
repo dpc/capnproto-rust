@@ -359,7 +359,7 @@ fn getter_text (_node_map : &collections::hashmap::HashMap<u64, schema_capnp::No
                                       member, offset)));
                 }
                 Some((Type::Data(()), _)) => {
-                    return (format!("Data::{}", moduleWithVar),
+                    return (format!("DecodeResult<Data::{}>", moduleWithVar),
                             Line(format!("self.{}.get_pointer_field({}).get_data(std::ptr::null(), 0)",
                                       member, offset)));
                 }
@@ -428,8 +428,8 @@ fn getter_text (_node_map : &collections::hashmap::HashMap<u64, schema_capnp::No
                 Some((Type::Struct(st), _)) => {
                     let theMod = scope_map.get(&st.get_type_id()).connect("::");
                     let middleArg = if isReader {~""} else {format!("{}::STRUCT_SIZE,", theMod)};
-                    return (format!("{}::{}", theMod, moduleWithVar),
-                            Line(format!("FromStruct{}::new(self.{}.get_pointer_field({}).get_struct({} std::ptr::null()))",
+                    return (format!("DecodeResult<{}::{}>", theMod, moduleWithVar),
+                            Line(format!("Ok(FromStruct{}::new(try!(self.{}.get_pointer_field({}).get_struct({} std::ptr::null()))))",
                                       module, member, offset, middleArg)))
                 }
                 Some((Type::Interface(interface), _)) => {
@@ -1462,7 +1462,7 @@ fn main() {
 
     let message = serialize::new_reader(&mut inp, message::DefaultReaderOptions).unwrap();
 
-    let request : schema_capnp::CodeGeneratorRequest::Reader = message.get_root();
+    let request : schema_capnp::CodeGeneratorRequest::Reader = message.get_root().unwrap();
 
     let mut node_map = collections::hashmap::HashMap::<u64, schema_capnp::Node::Reader>::new();
     let mut scope_map = collections::hashmap::HashMap::<u64, Vec<~str>>::new();

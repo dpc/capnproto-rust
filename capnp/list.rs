@@ -400,8 +400,8 @@ pub mod DataList {
         }
     }
 
-    impl <'a> Index<uint, Data::Reader<'a>> for Reader<'a> {
-        fn index(&self, index : &uint) -> Data::Reader<'a> {
+    impl <'a> Index<uint, DecodeResult<Data::Reader<'a>>> for Reader<'a> {
+        fn index(&self, index : &uint) -> DecodeResult<Data::Reader<'a>> {
             assert!(*index <  self.size());
             self.reader.get_pointer_element(*index).get_data(std::ptr::null(), 0)
         }
@@ -438,8 +438,8 @@ pub mod DataList {
         }
     }
 
-    impl <'a> Index<uint, Data::Builder<'a>> for Builder<'a> {
-        fn index(&self, index : &uint) -> Data::Builder<'a> {
+    impl <'a> Index<uint, DecodeResult<Data::Builder<'a>>> for Builder<'a> {
+        fn index(&self, index : &uint) -> DecodeResult<Data::Builder<'a>> {
             assert!(*index < self.size());
             self.builder.get_pointer_element(*index).get_data(std::ptr::null(), 0)
         }

@@ -36,7 +36,7 @@ macro_rules! car_value_impl(
 
                     result += self.get_length() as u64 * self.get_width() as u64 * self.get_height() as u64 / 50;
 
-                    let engine = self.get_engine();
+                    let engine = self.get_engine().unwrap();
                     result += engine.get_horsepower() as u64 * 40;
                     if engine.get_uses_electric() {
                         if engine.get_uses_gas() {

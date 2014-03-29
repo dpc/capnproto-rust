@@ -11,7 +11,7 @@ use capability::ClientHook;
 use common::*;
 use arena::*;
 use layout;
-use layout::{FromStructBuilder, HasStructSize};
+use layout::{DecodeResult, FromStructBuilder, HasStructSize};
 
 pub struct ReaderOptions {
     traversalLimitInWords : u64,
@@ -31,7 +31,7 @@ pub trait MessageReader {
     fn get_options<'a>(&'a self) -> &'a ReaderOptions;
 
     // XXX lifetime should not be 'static. See rustc issues #12856 #12857.
-    fn get_root<T : layout::FromStructReader<'static>>(&self) -> T {
+    fn get_root<T : layout::FromStructReader<'static>>(&self) -> DecodeResult<T> {
         unsafe {
             let segment : *SegmentReader = &self.arena().segment0;
 
@@ -39,9 +39,9 @@ pub trait MessageReader {
                 segment, (*segment).get_start_ptr(), self.get_options().nestingLimit as int);
 
             let result : T = layout::FromStructReader::new(
-                pointer_reader.get_struct(std::ptr::null()));
+                try!(pointer_reader.get_struct(std::ptr::null())));
 
-            result
+            Ok(result)
         }
     }
 
@@ -125,7 +125,7 @@ pub trait MessageBuilder {
     }
 
     // XXX lifetime should not be 'static
-    fn get_root<T : FromStructBuilder<'static> + HasStructSize>(&mut self) -> T {
+    fn get_root<T : FromStructBuilder<'static> + HasStructSize>(&mut self) -> DecodeResult<T> {
         self.get_root_internal().get_as_struct()
     }
 

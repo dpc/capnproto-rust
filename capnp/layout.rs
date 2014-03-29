@@ -1720,11 +1720,11 @@ impl <'a> PointerReader<'a> {
         self.pointer.is_null() || unsafe { (*self.pointer).is_null() }
     }
 
-    pub fn get_struct(&self, default_value: *Word) -> StructReader<'a> {
+    pub fn get_struct(&self, default_value: *Word) -> DecodeResult<StructReader<'a>> {
         let reff : *WirePointer = if self.pointer.is_null() { zero_pointer() } else { self.pointer };
         unsafe {
             WireHelpers::read_struct_pointer(self.segment, reff,
-                                             default_value, self.nesting_limit).unwrap()
+                                             default_value, self.nesting_limit)
         }
     }
 
@@ -1744,9 +1744,9 @@ impl <'a> PointerReader<'a> {
         }
     }
 
-    pub fn get_data(&self, default_value : *Word, default_size : ByteCount) -> Data::Reader<'a> {
+    pub fn get_data(&self, default_value : *Word, default_size : ByteCount) -> DecodeResult<Data::Reader<'a>> {
         unsafe {
-            WireHelpers::read_data_pointer(self.segment, self.pointer, default_value, default_size).unwrap()
+            WireHelpers::read_data_pointer(self.segment, self.pointer, default_value, default_size)
         }
     }
 
@@ -1780,13 +1780,13 @@ impl <'a> PointerBuilder<'a> {
         unsafe { (*self.pointer).is_null() }
     }
 
-    pub fn get_struct(&self, size : StructSize, default_value : *Word) -> StructBuilder<'a> {
+    pub fn get_struct(&self, size : StructSize, default_value : *Word) -> DecodeResult<StructBuilder<'a>> {
         unsafe {
             WireHelpers::get_writable_struct_pointer(
                 self.pointer,
                 self.segment,
                 size,
-                default_value).unwrap()
+                default_value)
         }
     }
 
@@ -1811,10 +1811,10 @@ impl <'a> PointerBuilder<'a> {
         }
     }
 
-    pub fn get_data(&self, default_value : *Word, default_size : ByteCount) -> Data::Builder<'a> {
+    pub fn get_data(&self, default_value : *Word, default_size : ByteCount) -> DecodeResult<Data::Builder<'a>> {
         unsafe {
             WireHelpers::get_writable_data_pointer(
-                self.pointer, self.segment, default_value, default_size).unwrap()
+                self.pointer, self.segment, default_value, default_size)
         }
     }
 

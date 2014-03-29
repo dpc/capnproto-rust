@@ -30,15 +30,15 @@ pub mod AnyPointer {
         }
 
         #[inline]
-        pub fn get_as_struct<T : FromStructReader<'a>>(&self) -> T {
-            FromStructReader::new(self.reader.get_struct(std::ptr::null()))
+        pub fn get_as_struct<T : FromStructReader<'a>>(&self) -> DecodeResult<T> {
+            Ok(FromStructReader::new(try!(self.reader.get_struct(std::ptr::null()))))
         }
 
         pub fn get_as_text(&self) -> DecodeResult<Text::Reader<'a>> {
             self.reader.get_text(std::ptr::null(), 0)
         }
 
-        pub fn get_as_data(&self) -> Data::Reader<'a> {
+        pub fn get_as_data(&self) -> DecodeResult<Data::Reader<'a>> {
             self.reader.get_data(std::ptr::null(), 0)
         }
 
@@ -56,7 +56,7 @@ pub mod AnyPointer {
                 match op {
                     &PipelineOp::Noop =>  { }
                     &PipelineOp::GetPointerField(idx) => {
-                        pointer = pointer.get_struct(std::ptr::null()).get_pointer_field(idx as uint)
+                        pointer = pointer.get_struct(std::ptr::null()).unwrap().get_pointer_field(idx as uint)
                     }
                 }
             }
@@ -75,9 +75,9 @@ pub mod AnyPointer {
             Builder { builder : builder }
         }
 
-        pub fn get_as_struct<T : FromStructBuilder<'a> + HasStructSize>(&self) -> T {
-            FromStructBuilder::new(
-                self.builder.get_struct(HasStructSize::struct_size(None::<T>), std::ptr::null()))
+        pub fn get_as_struct<T : FromStructBuilder<'a> + HasStructSize>(&self) -> DecodeResult<T> {
+            Ok(FromStructBuilder::new(
+                try!(self.builder.get_struct(HasStructSize::struct_size(None::<T>), std::ptr::null()))))
         }
 
         pub fn init_as_struct<T : FromStructBuilder<'a> + HasStructSize>(&self) -> T {
