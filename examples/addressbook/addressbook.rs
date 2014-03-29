@@ -13,6 +13,7 @@ pub mod addressbook {
     use std::io::{stdin, stdout, IoResult};
     use addressbook_capnp::{AddressBook, Person};
     use capnp::serialize_packed;
+    use capnp::layout::DecodeResult;
     use capnp::message::{MallocMessageBuilder, MessageBuilder, DefaultReaderOptions, MessageReader};
 
     pub fn write_address_book() -> IoResult<()> {
@@ -45,16 +46,16 @@ pub mod addressbook {
         serialize_packed::write_packed_message_unbuffered(&mut stdout(), & message)
     }
 
-    pub fn print_address_book() -> IoResult<()> {
+    pub fn print_address_book() -> DecodeResult<()> {
 
-        let message_reader = try!(serialize_packed::new_reader_unbuffered(&mut stdin(), DefaultReaderOptions));
-        let address_book = message_reader.get_root::<AddressBook::Reader>().unwrap();
-        let people = address_book.get_people().unwrap();
+        let message_reader = serialize_packed::new_reader_unbuffered(&mut stdin(), DefaultReaderOptions).unwrap();
+        let address_book = try!(message_reader.get_root::<AddressBook::Reader>());
+        let people = try!(address_book.get_people());
 
         for i in range(0, people.size()) {
             let person = people[i];
-            println!("{}: {}", person.get_name().unwrap(), person.get_email().unwrap());
-            let phones = person.get_phones().unwrap();
+            println!("{}: {}", try!(person.get_name()), try!(person.get_email()));
+            let phones = try!(person.get_phones());
             for j in range(0, phones.size()) {
                 let phone = phones[j];
                 let type_name = match phone.get_type() {
@@ -63,7 +64,7 @@ pub mod addressbook {
                     Some(Person::PhoneNumber::Type::Work) => {"work"}
                     None => {"UNKNOWN"}
                 };
-                println!("  {} phone: {}", type_name, phone.get_number().unwrap());
+                println!("  {} phone: {}", type_name, try!(phone.get_number()));
             }
             match person.get_employment().which() {
                 Ok(Person::Employment::Unemployed(())) => {
