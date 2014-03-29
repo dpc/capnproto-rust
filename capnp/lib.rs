@@ -6,13 +6,9 @@
 
 #![feature(globs)]
 #![feature(macro_rules)]
-#![feature(phase)]
 
 #![crate_id="capnp"]
 #![crate_type = "lib"]
-
-// import logging macros
-#[phase(syntax, link)] extern crate log;
 
 pub mod any;
 pub mod arena;
