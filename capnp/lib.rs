@@ -21,7 +21,7 @@ pub mod layout;
 pub mod list;
 pub mod mask;
 pub mod message;
-pub mod pointer_helpers;
+//pub mod pointer_helpers;
 pub mod serialize;
 pub mod serialize_packed;
 

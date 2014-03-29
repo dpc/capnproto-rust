@@ -369,13 +369,13 @@ fn getter_text (_node_map : &collections::hashmap::HashMap<u64, schema_capnp::No
                         Some(Type::Struct(st)) => {
                             let theMod = scope_map.get(&st.get_type_id()).connect("::");
                             if isReader {
-                                return (format!("StructList::{}<'a,{}::{}<'a>>", module, theMod, module),
-                                        Line(format!("StructList::{}::new(self.{}.get_pointer_field({}).get_list({}::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))",
+                                return (format!("DecodeResult<StructList::{}<'a,{}::{}<'a>>>", module, theMod, module),
+                                        Line(format!("Ok(StructList::{}::new(try!(self.{}.get_pointer_field({}).get_list({}::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))))",
                                                      module, member, offset, theMod))
                                         );
                             } else {
-                                return (format!("StructList::{}<'a,{}::{}<'a>>", module, theMod, module),
-                                        Line(format!("StructList::{}::new(self.{}.get_pointer_field({}).get_struct_list({}::STRUCT_SIZE, std::ptr::null()))",
+                                return (format!("DecodeResult<StructList::{}<'a,{}::{}<'a>>>", module, theMod, module),
+                                        Line(format!("Ok(StructList::{}::new(try!(self.{}.get_pointer_field({}).get_struct_list({}::STRUCT_SIZE, std::ptr::null()))))",
                                                      module, member, offset, theMod))
                                         );
                             }
@@ -383,24 +383,24 @@ fn getter_text (_node_map : &collections::hashmap::HashMap<u64, schema_capnp::No
                         Some(Type::Enum(e)) => {
                             let theMod = scope_map.get(&e.get_type_id()).connect("::");
                             let fullModuleName = format!("{}::Reader", theMod);
-                            return (format!("EnumList::{}<'a,{}>",module,fullModuleName),
-                                    Line(format!("EnumList::{}::new(self.{}.get_pointer_field({}).get_list(layout::TwoBytes, std::ptr::null()))",
+                            return (format!("DecodeResult<EnumList::{}<'a,{}>>",module,fullModuleName),
+                                    Line(format!("Ok(EnumList::{}::new(try!(self.{}.get_pointer_field({}).get_list(layout::TwoBytes, std::ptr::null()))))",
                                          module, member, offset)));
                         }
                         Some(Type::List(t1)) => {
                             let type_param = list_list_type_param(scope_map, t1.get_element_type(), isReader, "'a");
-                            return (format!("ListList::{}<'a,{}>", module, type_param),
-                                    Line(format!("ListList::{}::new(self.{}.get_pointer_field({}).get_list(layout::Pointer, std::ptr::null()))",
+                            return (format!("DecodeResult<ListList::{}<'a,{}>>", module, type_param),
+                                    Line(format!("Ok(ListList::{}::new(try!(self.{}.get_pointer_field({}).get_list(layout::Pointer, std::ptr::null()))))",
                                                  module, member, offset)))
                         }
                         Some(Type::Text(())) => {
-                            return (format!("TextList::{}<'a>", module),
-                                    Line(format!("TextList::{}::new(self.{}.get_pointer_field({}).get_list(layout::Pointer, std::ptr::null()))",
+                            return (format!("DecodeResult<TextList::{}<'a>>", module),
+                                    Line(format!("Ok(TextList::{}::new(try!(self.{}.get_pointer_field({}).get_list(layout::Pointer, std::ptr::null()))))",
                                                  module, member, offset)))
                         }
                         Some(Type::Data(())) => {
-                            return (format!("DataList::{}<'a>", module),
-                                    Line(format!("DataList::{}::new(self.{}.get_pointer_field({}).get_list(layout::Pointer, std::ptr::null()))",
+                            return (format!("DecodeResult<DataList::{}<'a>>", module),
+                                    Line(format!("Ok(DataList::{}::new(try!(self.{}.get_pointer_field({}).get_list(layout::Pointer, std::ptr::null()))))",
                                                  module, member, offset)))
                         }
                         Some(Type::Interface(_)) => {fail!("unimplemented") }
@@ -409,8 +409,8 @@ fn getter_text (_node_map : &collections::hashmap::HashMap<u64, schema_capnp::No
                             let typeStr = prim_type_str(primType);
                             let sizeStr = element_size_str(element_size(primType));
                             return
-                                (format!("PrimitiveList::{}<'a,{}>", module, typeStr),
-                                 Line(format!("PrimitiveList::{}::new(self.{}.get_pointer_field({}).get_list(layout::{}, std::ptr::null()))",
+                                (format!("DecodeResult<PrimitiveList::{}<'a,{}>>", module, typeStr),
+                                 Line(format!("Ok(PrimitiveList::{}::new(try!(self.{}.get_pointer_field({}).get_list(layout::{}, std::ptr::null()))))",
                                            module, member, offset, sizeStr)))
                         }
                     }

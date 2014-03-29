@@ -75,7 +75,7 @@ pub fn handle_request(request : SearchResultList::Reader,
                      response : SearchResultList::Builder) -> DecodeResult<()> {
     let mut scoredResults : ~[ScoredResult] = ~[];
 
-    let results = request.get_results();
+    let results = try!(request.get_results());
     for i in range(0, results.size()) {
         let result = results[i];
         let mut score = result.get_score();
@@ -104,7 +104,7 @@ pub fn handle_request(request : SearchResultList::Reader,
 
 pub fn check_response(response : SearchResultList::Reader, expectedGoodCount : int) -> bool {
     let mut goodCount : int = 0;
-    let results = response.get_results();
+    let results = response.get_results().unwrap();
     for i in range(0, results.size()) {
         let result = results[i];
         if result.get_score() > 1001.0 {

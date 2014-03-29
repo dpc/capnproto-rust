@@ -45,14 +45,14 @@ pub mod Node {
     }
     #[inline]
     pub fn get_nested_nodes(&self) -> StructList::Reader<'a,schema_capnp::Node::NestedNode::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Node::NestedNode::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Node::NestedNode::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
     }
     pub fn has_nested_nodes(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
     }
     #[inline]
     pub fn get_annotations(&self) -> StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(2).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+      StructList::Reader::new(self.reader.get_pointer_field(2).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
     }
     pub fn has_annotations(&self) -> bool {
       !self.reader.get_pointer_field(2).is_null()
@@ -150,7 +150,7 @@ pub mod Node {
     }
     #[inline]
     pub fn get_nested_nodes(&self) -> StructList::Builder<'a,schema_capnp::Node::NestedNode::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Node::NestedNode::STRUCT_SIZE, std::ptr::null()))
+      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Node::NestedNode::STRUCT_SIZE, std::ptr::null()).unwrap())
     }
     #[inline]
     pub fn set_nested_nodes(&self, value : StructList::Reader<'a,schema_capnp::Node::NestedNode::Reader<'a>>) {
@@ -166,7 +166,7 @@ pub mod Node {
     }
     #[inline]
     pub fn get_annotations(&self) -> StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(2).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()))
+      StructList::Builder::new(self.builder.get_pointer_field(2).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()).unwrap())
     }
     #[inline]
     pub fn set_annotations(&self, value : StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>) {
@@ -421,7 +421,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_fields(&self) -> StructList::Reader<'a,schema_capnp::Field::Reader<'a>> {
-        StructList::Reader::new(self.reader.get_pointer_field(3).get_list(schema_capnp::Field::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+        StructList::Reader::new(self.reader.get_pointer_field(3).get_list(schema_capnp::Field::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
       }
       pub fn has_fields(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -488,7 +488,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_fields(&self) -> StructList::Builder<'a,schema_capnp::Field::Builder<'a>> {
-        StructList::Builder::new(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Field::STRUCT_SIZE, std::ptr::null()))
+        StructList::Builder::new(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Field::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_fields(&self, value : StructList::Reader<'a,schema_capnp::Field::Reader<'a>>) {
@@ -535,7 +535,7 @@ pub mod Node {
     impl <'a> Reader<'a> {
       #[inline]
       pub fn get_enumerants(&self) -> StructList::Reader<'a,schema_capnp::Enumerant::Reader<'a>> {
-        StructList::Reader::new(self.reader.get_pointer_field(3).get_list(schema_capnp::Enumerant::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+        StructList::Reader::new(self.reader.get_pointer_field(3).get_list(schema_capnp::Enumerant::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
       }
       pub fn has_enumerants(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -554,7 +554,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_enumerants(&self) -> StructList::Builder<'a,schema_capnp::Enumerant::Builder<'a>> {
-        StructList::Builder::new(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Enumerant::STRUCT_SIZE, std::ptr::null()))
+        StructList::Builder::new(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Enumerant::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_enumerants(&self, value : StructList::Reader<'a,schema_capnp::Enumerant::Reader<'a>>) {
@@ -601,14 +601,14 @@ pub mod Node {
     impl <'a> Reader<'a> {
       #[inline]
       pub fn get_methods(&self) -> StructList::Reader<'a,schema_capnp::Method::Reader<'a>> {
-        StructList::Reader::new(self.reader.get_pointer_field(3).get_list(schema_capnp::Method::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+        StructList::Reader::new(self.reader.get_pointer_field(3).get_list(schema_capnp::Method::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
       }
       pub fn has_methods(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
       }
       #[inline]
       pub fn get_extends(&self) -> PrimitiveList::Reader<'a,u64> {
-        PrimitiveList::Reader::new(self.reader.get_pointer_field(4).get_list(layout::EightBytes, std::ptr::null()))
+        PrimitiveList::Reader::new(self.reader.get_pointer_field(4).get_list(layout::EightBytes, std::ptr::null()).unwrap())
       }
       pub fn has_extends(&self) -> bool {
         !self.reader.get_pointer_field(4).is_null()
@@ -627,7 +627,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_methods(&self) -> StructList::Builder<'a,schema_capnp::Method::Builder<'a>> {
-        StructList::Builder::new(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Method::STRUCT_SIZE, std::ptr::null()))
+        StructList::Builder::new(self.builder.get_pointer_field(3).get_struct_list(schema_capnp::Method::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_methods(&self, value : StructList::Reader<'a,schema_capnp::Method::Reader<'a>>) {
@@ -643,7 +643,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_extends(&self) -> PrimitiveList::Builder<'a,u64> {
-        PrimitiveList::Builder::new(self.builder.get_pointer_field(4).get_list(layout::EightBytes, std::ptr::null()))
+        PrimitiveList::Builder::new(self.builder.get_pointer_field(4).get_list(layout::EightBytes, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_extends(&self, value : PrimitiveList::Reader<'a,u64>) {
@@ -1012,7 +1012,7 @@ pub mod Field {
     }
     #[inline]
     pub fn get_annotations(&self) -> StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
     }
     pub fn has_annotations(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
@@ -1082,7 +1082,7 @@ pub mod Field {
     }
     #[inline]
     pub fn get_annotations(&self) -> StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()))
+      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()).unwrap())
     }
     #[inline]
     pub fn set_annotations(&self, value : StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>) {
@@ -1465,7 +1465,7 @@ pub mod Enumerant {
     }
     #[inline]
     pub fn get_annotations(&self) -> StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
     }
     pub fn has_annotations(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
@@ -1511,7 +1511,7 @@ pub mod Enumerant {
     }
     #[inline]
     pub fn get_annotations(&self) -> StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()))
+      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()).unwrap())
     }
     #[inline]
     pub fn set_annotations(&self, value : StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>) {
@@ -1581,7 +1581,7 @@ pub mod Method {
     }
     #[inline]
     pub fn get_annotations(&self) -> StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::Annotation::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
     }
     pub fn has_annotations(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
@@ -1643,7 +1643,7 @@ pub mod Method {
     }
     #[inline]
     pub fn get_annotations(&self) -> StructList::Builder<'a,schema_capnp::Annotation::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()))
+      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::Annotation::STRUCT_SIZE, std::ptr::null()).unwrap())
     }
     #[inline]
     pub fn set_annotations(&self, value : StructList::Reader<'a,schema_capnp::Annotation::Reader<'a>>) {
@@ -2822,14 +2822,14 @@ pub mod CodeGeneratorRequest {
   impl <'a> Reader<'a> {
     #[inline]
     pub fn get_nodes(&self) -> StructList::Reader<'a,schema_capnp::Node::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(0).get_list(schema_capnp::Node::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+      StructList::Reader::new(self.reader.get_pointer_field(0).get_list(schema_capnp::Node::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
     }
     pub fn has_nodes(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
     }
     #[inline]
     pub fn get_requested_files(&self) -> StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Reader<'a>> {
-      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::CodeGeneratorRequest::RequestedFile::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+      StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::CodeGeneratorRequest::RequestedFile::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
     }
     pub fn has_requested_files(&self) -> bool {
       !self.reader.get_pointer_field(1).is_null()
@@ -2852,7 +2852,7 @@ pub mod CodeGeneratorRequest {
     }
     #[inline]
     pub fn get_nodes(&self) -> StructList::Builder<'a,schema_capnp::Node::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(0).get_struct_list(schema_capnp::Node::STRUCT_SIZE, std::ptr::null()))
+      StructList::Builder::new(self.builder.get_pointer_field(0).get_struct_list(schema_capnp::Node::STRUCT_SIZE, std::ptr::null()).unwrap())
     }
     #[inline]
     pub fn set_nodes(&self, value : StructList::Reader<'a,schema_capnp::Node::Reader<'a>>) {
@@ -2868,7 +2868,7 @@ pub mod CodeGeneratorRequest {
     }
     #[inline]
     pub fn get_requested_files(&self) -> StructList::Builder<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Builder<'a>> {
-      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::CodeGeneratorRequest::RequestedFile::STRUCT_SIZE, std::ptr::null()))
+      StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::CodeGeneratorRequest::RequestedFile::STRUCT_SIZE, std::ptr::null()).unwrap())
     }
     #[inline]
     pub fn set_requested_files(&self, value : StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Reader<'a>>) {
@@ -2929,7 +2929,7 @@ pub mod CodeGeneratorRequest {
       }
       #[inline]
       pub fn get_imports(&self) -> StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Import::Reader<'a>> {
-        StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::CodeGeneratorRequest::RequestedFile::Import::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()))
+        StructList::Reader::new(self.reader.get_pointer_field(1).get_list(schema_capnp::CodeGeneratorRequest::RequestedFile::Import::STRUCT_SIZE.preferred_list_encoding, std::ptr::null()).unwrap())
       }
       pub fn has_imports(&self) -> bool {
         !self.reader.get_pointer_field(1).is_null()
@@ -2975,7 +2975,7 @@ pub mod CodeGeneratorRequest {
       }
       #[inline]
       pub fn get_imports(&self) -> StructList::Builder<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Import::Builder<'a>> {
-        StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::CodeGeneratorRequest::RequestedFile::Import::STRUCT_SIZE, std::ptr::null()))
+        StructList::Builder::new(self.builder.get_pointer_field(1).get_struct_list(schema_capnp::CodeGeneratorRequest::RequestedFile::Import::STRUCT_SIZE, std::ptr::null()).unwrap())
       }
       #[inline]
       pub fn set_imports(&self, value : StructList::Reader<'a,schema_capnp::CodeGeneratorRequest::RequestedFile::Import::Reader<'a>>) {

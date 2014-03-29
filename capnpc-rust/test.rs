@@ -61,17 +61,17 @@ mod tests {
 
 
         let testPrimListReader = testPrimList.as_reader();
-        let uint8List = testPrimListReader.get_uint8_list();
+        let uint8List = testPrimListReader.get_uint8_list().unwrap();
         for i in range(0, uint8List.size()) {
             assert_eq!(uint8List[i], i as u8);
         }
-        let uint64List = testPrimListReader.get_uint64_list();
+        let uint64List = testPrimListReader.get_uint64_list().unwrap();
         for i in range(0, uint64List.size()) {
             assert_eq!(uint64List[i], i as u64);
         }
 
         assert_eq!(testPrimListReader.has_bool_list(), true);
-        let boolList = testPrimListReader.get_bool_list();
+        let boolList = testPrimListReader.get_bool_list().unwrap();
         assert!(boolList[0]);
         assert!(boolList[1]);
         assert!(boolList[2]);
@@ -89,7 +89,7 @@ mod tests {
         assert!(!boolList[63]);
         assert!(boolList[64]);
 
-        assert_eq!(testPrimListReader.get_void_list().size(), 1025);
+        assert_eq!(testPrimListReader.get_void_list().unwrap().size(), 1025);
     }
 
     #[test]
@@ -102,14 +102,14 @@ mod tests {
         let test_struct_list = message.init_root::<TestStructList::Builder>();
 
         test_struct_list.init_struct_list(4);
-        let struct_list = test_struct_list.get_struct_list();
+        let struct_list = test_struct_list.get_struct_list().unwrap();
         struct_list[0].init_uint8_list(1).set(0, 5u8);
 
         // why does the next line pass the typechecker?
 //        struct_list[0].get_uint8_list()[0] = 6u8;
         {
             let reader = test_struct_list.as_reader();
-            assert_eq!(reader.get_struct_list()[0].get_uint8_list()[0], 5u8);
+            assert_eq!(reader.get_struct_list().unwrap()[0].get_uint8_list().unwrap()[0], 5u8);
         }
     }
 
@@ -263,7 +263,7 @@ mod tests {
 
 
         let complex_list_reader = test_complex_list.as_reader();
-        let enumListReader = complex_list_reader.get_enum_list();
+        let enumListReader = complex_list_reader.get_enum_list().unwrap();
         for i in range::<uint>(0,10) {
             assert!(enumListReader[i] == Some(AnEnum::Qux));
         }
@@ -271,41 +271,41 @@ mod tests {
             assert!(enumListReader[i] == Some(AnEnum::Bar));
         }
 
-        let text_list = complex_list_reader.get_text_list();
+        let text_list = complex_list_reader.get_text_list().unwrap();
         assert_eq!(text_list.size(), 2);
         assert_eq!(text_list[0].unwrap(), "garply");
         assert_eq!(text_list[1].unwrap(), "foo");
 
-        let data_list = complex_list_reader.get_data_list();
+        let data_list = complex_list_reader.get_data_list().unwrap();
         assert_eq!(data_list.size(), 2);
         assert!(data_list[0].unwrap() == [0u8, 1u8, 2u8]);
         assert!(data_list[1].unwrap() == [255u8, 254u8, 253u8]);
 
-        let prim_list_list = complex_list_reader.get_prim_list_list();
+        let prim_list_list = complex_list_reader.get_prim_list_list().unwrap();
         assert_eq!(prim_list_list.size(), 2);
-        assert_eq!(prim_list_list[0].size(), 3);
-        assert!(prim_list_list[0][0] == 5);
-        assert!(prim_list_list[0][1] == 6);
-        assert!(prim_list_list[0][2] == 7);
-        assert!(prim_list_list[1][0] == -1);
+        assert_eq!(prim_list_list[0].unwrap().size(), 3);
+        assert!(prim_list_list[0].unwrap()[0] == 5);
+        assert!(prim_list_list[0].unwrap()[1] == 6);
+        assert!(prim_list_list[0].unwrap()[2] == 7);
+        assert!(prim_list_list[1].unwrap()[0] == -1);
 
-        let prim_list_list_list = complex_list_reader.get_prim_list_list_list();
-        assert!(prim_list_list_list[0][0][0] == 0);
-        assert!(prim_list_list_list[0][0][1] == 1);
-        assert!(prim_list_list_list[0][1][0] == 255);
-        assert!(prim_list_list_list[1][0][0] == 10);
-        assert!(prim_list_list_list[1][0][1] == 9);
-        assert!(prim_list_list_list[1][0][2] == 8);
+        let prim_list_list_list = complex_list_reader.get_prim_list_list_list().unwrap();
+        assert!(prim_list_list_list[0].unwrap()[0].unwrap()[0] == 0);
+        assert!(prim_list_list_list[0].unwrap()[0].unwrap()[1] == 1);
+        assert!(prim_list_list_list[0].unwrap()[1].unwrap()[0] == 255);
+        assert!(prim_list_list_list[1].unwrap()[0].unwrap()[0] == 10);
+        assert!(prim_list_list_list[1].unwrap()[0].unwrap()[1] == 9);
+        assert!(prim_list_list_list[1].unwrap()[0].unwrap()[2] == 8);
 
-        let enum_list_list = complex_list_reader.get_enum_list_list();
-        assert!(enum_list_list[0][0] == Some(AnEnum::Bar));
-        assert!(enum_list_list[1][0] == Some(AnEnum::Foo));
-        assert!(enum_list_list[1][1] == Some(AnEnum::Qux));
+        let enum_list_list = complex_list_reader.get_enum_list_list().unwrap();
+        assert!(enum_list_list[0].unwrap()[0] == Some(AnEnum::Bar));
+        assert!(enum_list_list[1].unwrap()[0] == Some(AnEnum::Foo));
+        assert!(enum_list_list[1].unwrap()[1] == Some(AnEnum::Qux));
 
-        assert!(complex_list_reader.get_text_list_list()[0][0].unwrap() == "abc");
-        assert!(complex_list_reader.get_data_list_list()[0][0].unwrap() == [255, 254, 253]);
+        assert!(complex_list_reader.get_text_list_list().unwrap()[0].unwrap()[0].unwrap() == "abc");
+        assert!(complex_list_reader.get_data_list_list().unwrap()[0].unwrap()[0].unwrap() == [255, 254, 253]);
 
-        assert!(complex_list_reader.get_struct_list_list()[0][0].get_int8_field() == -1);
+        assert!(complex_list_reader.get_struct_list_list().unwrap()[0].unwrap()[0].get_int8_field() == -1);
     }
 
     #[test]
@@ -350,11 +350,11 @@ mod tests {
         }
 
         any_pointer.init_as_struct::<TestEmptyStruct::Builder>();
-        any_pointer.get_as_struct::<TestEmptyStruct::Builder>();
+        any_pointer.get_as_struct::<TestEmptyStruct::Builder>().unwrap();
 
         {
             let reader = test_any_pointer.as_reader();
-            reader.get_any_pointer_field().get_as_struct::<TestEmptyStruct::Reader>();
+            reader.get_any_pointer_field().get_as_struct::<TestEmptyStruct::Reader>().unwrap();
         }
 
     }

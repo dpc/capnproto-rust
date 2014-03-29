@@ -4,7 +4,7 @@
  * See the LICENSE file in the capnproto-rust root directory.
  */
 
-use layout::{PointerBuilder, PointerReader};
+use layout::{DecodeResult, PointerBuilder, PointerReader};
 use common::Word;
 
 
@@ -12,17 +12,17 @@ use common::Word;
 // difference in the implementations is the FieldSize.
 
 pub trait FromPointerReader<'a> {
-    fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> Self;
+    fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> DecodeResult<Self>;
 }
 
 pub trait FromPointerBuilder<'a> {
     fn init_pointer(PointerBuilder<'a>, uint) -> Self;
-    fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> Self;
+    fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> DecodeResult<Self>;
 }
 
 pub mod PrimitiveList {
     use super::{FromPointerReader, FromPointerBuilder};
-    use layout::{ListReader, ListBuilder, PointerReader, PointerBuilder,
+    use layout::{DecodeResult, ListReader, ListBuilder, PointerReader, PointerBuilder,
                  PrimitiveElement, element_size_for_type};
     use common::Word;
 
@@ -40,8 +40,8 @@ pub mod PrimitiveList {
     }
 
     impl <'a, T : PrimitiveElement> FromPointerReader<'a> for Reader<'a, T> {
-        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> Reader<'a, T> {
-            Reader { reader : reader.get_list(element_size_for_type::<T>(), default_value) }
+        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> DecodeResult<Reader<'a, T>> {
+            Ok(Reader { reader : try!(reader.get_list(element_size_for_type::<T>(), default_value)) })
         }
     }
 
@@ -72,8 +72,8 @@ pub mod PrimitiveList {
         fn init_pointer(builder : PointerBuilder<'a>, size : uint) -> Builder<'a, T> {
             Builder { builder : builder.init_list(element_size_for_type::<T>(), size) }
         }
-        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> Builder<'a, T> {
-            Builder { builder : builder.get_list(element_size_for_type::<T>(), default_value) }
+        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> DecodeResult<Builder<'a, T>> {
+            Ok(Builder { builder : try!(builder.get_list(element_size_for_type::<T>(), default_value)) })
         }
     }
 
@@ -109,8 +109,8 @@ pub mod EnumList {
     }
 
     impl <'a, T : FromPrimitive> FromPointerReader<'a> for Reader<'a, T> {
-        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> Reader<'a, T> {
-            Reader { reader : reader.get_list(TwoBytes, default_value) }
+        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> DecodeResult<Reader<'a, T>> {
+            Ok(Reader { reader : try!(reader.get_list(TwoBytes, default_value)) })
         }
     }
 
@@ -143,8 +143,8 @@ pub mod EnumList {
         fn init_pointer(builder : PointerBuilder<'a>, size : uint) -> Builder<'a, T> {
             Builder { builder : builder.init_list(TwoBytes, size) }
         }
-        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> Builder<'a, T> {
-            Builder { builder : builder.get_list(TwoBytes, default_value) }
+        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> DecodeResult<Builder<'a, T>> {
+            Ok(Builder { builder : try!(builder.get_list(TwoBytes, default_value)) })
         }
     }
 
@@ -176,8 +176,8 @@ pub mod StructList {
     }
 
     impl <'a, T : FromStructReader<'a>> FromPointerReader<'a> for Reader<'a, T> {
-        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> Reader<'a, T> {
-            Reader { reader : reader.get_list(InlineComposite, default_value) }
+        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> DecodeResult<Reader<'a, T>> {
+            Ok(Reader { reader : try!(reader.get_list(InlineComposite, default_value)) })
         }
     }
 
@@ -210,10 +210,10 @@ pub mod StructList {
                 builder : builder.init_struct_list(size, HasStructSize::struct_size(None::<T>))
             }
         }
-        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> Builder<'a, T> {
-            Builder {
-                builder : builder.get_struct_list(HasStructSize::struct_size(None::<T>), default_value)
-            }
+        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> DecodeResult<Builder<'a, T>> {
+            Ok(Builder {
+                builder : try!(builder.get_struct_list(HasStructSize::struct_size(None::<T>), default_value))
+            })
         }
     }
 
@@ -246,13 +246,13 @@ pub mod ListList {
     }
 
     impl <'a, T : FromPointerReader<'a>> FromPointerReader<'a> for Reader<'a, T> {
-        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> Reader<'a, T> {
-            Reader { reader : reader.get_list(Pointer, default_value) }
+        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> DecodeResult<Reader<'a, T>> {
+            Ok(Reader { reader : try!(reader.get_list(Pointer, default_value)) })
         }
     }
 
-    impl <'a, T : FromPointerReader<'a>> Index<uint, T> for Reader<'a, T> {
-        fn index(&self, index : &uint) -> T {
+    impl <'a, T : FromPointerReader<'a>> Index<uint, DecodeResult<T>> for Reader<'a, T> {
+        fn index(&self, index : &uint) -> DecodeResult<T> {
             assert!(*index <  self.size());
             FromPointerReader::get_from_pointer(
                 &self.reader.get_pointer_element(*index), std::ptr::null())
@@ -284,17 +284,17 @@ pub mod ListList {
                 builder : builder.init_list(Pointer, size)
             }
         }
-        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> Builder<'a, T> {
-            Builder {
-                builder : builder.get_list(Pointer, default_value)
-            }
+        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> DecodeResult<Builder<'a, T>> {
+            Ok(Builder {
+                builder : try!(builder.get_list(Pointer, default_value))
+            })
         }
     }
 
-    impl <'a, T : FromPointerBuilder<'a>> Index<uint, T> for Builder<'a, T> {
-        fn index(&self, index : &uint) -> T {
+    impl <'a, T : FromPointerBuilder<'a>> Index<uint, DecodeResult<T>> for Builder<'a, T> {
+        fn index(&self, index : &uint) -> DecodeResult<T> {
             assert!(*index < self.size());
-            let result : T =
+            let result : DecodeResult<T> =
                 FromPointerBuilder::get_from_pointer(
                 self.builder.get_pointer_element(*index),
                 std::ptr::null());
@@ -324,8 +324,8 @@ pub mod TextList {
     }
 
     impl <'a> FromPointerReader<'a> for Reader<'a> {
-        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> Reader<'a> {
-            Reader { reader : reader.get_list(Pointer, default_value) }
+        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> DecodeResult<Reader<'a>> {
+            Ok(Reader { reader : try!(reader.get_list(Pointer, default_value)) })
         }
     }
 
@@ -360,10 +360,10 @@ pub mod TextList {
                 builder : builder.init_list(Pointer, size)
             }
         }
-        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> Builder<'a> {
-            Builder {
-                builder : builder.get_list(Pointer, default_value)
-            }
+        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> DecodeResult<Builder<'a>> {
+            Ok(Builder {
+                builder : try!(builder.get_list(Pointer, default_value))
+            })
         }
     }
 
@@ -395,8 +395,8 @@ pub mod DataList {
     }
 
     impl <'a> FromPointerReader<'a> for Reader<'a> {
-        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> Reader<'a> {
-            Reader { reader : reader.get_list(Pointer, default_value) }
+        fn get_from_pointer(reader : &PointerReader<'a>, default_value : *Word) -> DecodeResult<Reader<'a>> {
+            Ok(Reader { reader : try!(reader.get_list(Pointer, default_value)) })
         }
     }
 
@@ -431,10 +431,10 @@ pub mod DataList {
                 builder : builder.init_list(Pointer, size)
             }
         }
-        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> Builder<'a> {
-            Builder {
-                builder : builder.get_list(Pointer, default_value)
-            }
+        fn get_from_pointer(builder : PointerBuilder<'a>, default_value : *Word) -> DecodeResult<Builder<'a>> {
+            Ok(Builder {
+                builder : try!(builder.get_list(Pointer, default_value))
+            })
         }
     }
 

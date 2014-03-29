@@ -16,27 +16,28 @@ pub type ResponseReader<'a> = TotalValue::Reader<'a>;
 pub type Expectation = u64;
 
 trait CarValue {
-    fn car_value(&self) -> u64;
+    fn car_value(&self) -> DecodeResult<u64>;
 }
 
 macro_rules! car_value_impl(
     ($typ:ident) => (
             impl <'a> CarValue for Car::$typ<'a> {
-                fn car_value (&self) -> u64 {
+                fn car_value (&self) -> DecodeResult<u64> {
                     let mut result : u64 = 0;
                     result += self.get_seats() as u64 * 200;
                     result += self.get_doors() as u64 * 350;
 
                     // TODO Lists should have iterators.
-                    for i in range(0, self.get_wheels().size()) {
-                        let wheel = self.get_wheels()[i];
+                    let wheels = try!(self.get_wheels());
+                    for i in range(0, wheels.size()) {
+                        let wheel = wheels[i];
                         result += wheel.get_diameter() as u64 * wheel.get_diameter() as u64;
                         result += if wheel.get_snow_tires() { 100 } else { 0 };
                     }
 
                     result += self.get_length() as u64 * self.get_width() as u64 * self.get_height() as u64 / 50;
 
-                    let engine = self.get_engine().unwrap();
+                    let engine = try!(self.get_engine());
                     result += engine.get_horsepower() as u64 * 40;
                     if engine.get_uses_electric() {
                         if engine.get_uses_gas() {
@@ -54,7 +55,7 @@ macro_rules! car_value_impl(
 
                     result += self.get_cup_holders() as u64 * 25;
 
-                    return result;
+                    return Ok(result);
                 }
 
             }
@@ -113,7 +114,7 @@ pub fn setup_request(rng : &mut FastRand, request : ParkingLot::Builder) -> u64 
     for i in range(0, cars.size()) {
         let car = cars[i];
         random_car(rng, car);
-        result += car.car_value();
+        result += car.car_value().unwrap();
     }
 
     result
@@ -121,9 +122,9 @@ pub fn setup_request(rng : &mut FastRand, request : ParkingLot::Builder) -> u64 
 
 pub fn handle_request(request : ParkingLot::Reader, response : TotalValue::Builder) -> DecodeResult<()> {
     let mut result = 0;
-    let cars = request.get_cars();
+    let cars = try!(request.get_cars());
     for i in range(0, cars.size()) {
-        result += cars[i].car_value();
+        result += try!(cars[i].car_value());
     }
     response.set_amount(result);
     Ok(())

@@ -49,12 +49,12 @@ pub mod addressbook {
 
         let message_reader = try!(serialize_packed::new_reader_unbuffered(&mut stdin(), DefaultReaderOptions));
         let address_book = message_reader.get_root::<AddressBook::Reader>().unwrap();
-        let people = address_book.get_people();
+        let people = address_book.get_people().unwrap();
 
         for i in range(0, people.size()) {
             let person = people[i];
             println!("{}: {}", person.get_name().unwrap(), person.get_email().unwrap());
-            let phones = person.get_phones();
+            let phones = person.get_phones().unwrap();
             for j in range(0, phones.size()) {
                 let phone = phones[j];
                 let type_name = match phone.get_type() {

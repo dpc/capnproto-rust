@@ -1728,13 +1728,14 @@ impl <'a> PointerReader<'a> {
         }
     }
 
-    pub fn get_list(&self, expected_element_size : FieldSize, default_value : *Word) -> ListReader<'a> {
+    pub fn get_list(&self, expected_element_size : FieldSize,
+                    default_value : *Word) -> DecodeResult<ListReader<'a>> {
         let reff = if self.pointer.is_null() { zero_pointer() } else { self.pointer };
         unsafe {
             WireHelpers::read_list_pointer(self.segment,
                                            reff,
                                            default_value,
-                                           expected_element_size, self.nesting_limit).unwrap()
+                                           expected_element_size, self.nesting_limit)
         }
     }
 
@@ -1790,17 +1791,18 @@ impl <'a> PointerBuilder<'a> {
         }
     }
 
-    pub fn get_list(&self, element_size : FieldSize, default_value : *Word) -> ListBuilder<'a> {
+    pub fn get_list(&self, element_size : FieldSize, default_value : *Word) -> DecodeResult<ListBuilder<'a>> {
         unsafe {
             WireHelpers::get_writable_list_pointer(
-                self.pointer, self.segment, element_size, default_value).unwrap()
+                self.pointer, self.segment, element_size, default_value)
         }
     }
 
-    pub fn get_struct_list(&self, element_size : StructSize, default_value : *Word) -> ListBuilder<'a> {
+    pub fn get_struct_list(&self, element_size : StructSize,
+                           default_value : *Word) -> DecodeResult<ListBuilder<'a>> {
         unsafe {
             WireHelpers::get_writable_struct_list_pointer(
-                self.pointer, self.segment, element_size, default_value).unwrap()
+                self.pointer, self.segment, element_size, default_value)
         }
     }
 
