@@ -313,6 +313,12 @@ struct SegmentAnd<T> {
     value : T
 }
 
+pub struct DecodeError {
+    message : &'static str,
+}
+
+pub type DecodeResult<T> = Result<T, DecodeError>;
+
 mod WireHelpers {
     use std;
     use capability::ClientHook;
@@ -327,6 +333,14 @@ mod WireHelpers {
             if !($condition) {
                 debug!($message);
                 $fail
+            }
+            );
+        )
+
+    macro_rules! decode_require(
+        ($condition:expr, $message:expr) => (
+            if !($condition) {
+                return Err(DecodeError { message : $message });
             }
             );
         )
@@ -445,7 +459,7 @@ mod WireHelpers {
     #[inline]
     pub unsafe fn follow_fars(reff: &mut *WirePointer,
                               refTarget: *Word,
-                              segment : &mut *SegmentReader) -> *Word {
+                              segment : &mut *SegmentReader) -> DecodeResult<*Word> {
 
         //# If the segment is null, this is an unchecked message,
         //# so there are no FAR pointers.
@@ -457,15 +471,14 @@ mod WireHelpers {
                 (**reff).far_position_in_segment() as int);
 
             let padWords : int = if (**reff).is_double_far() { 2 } else { 1 };
-            require!(bounds_check(*segment, ptr, ptr.offset(padWords)),
-                     "Message contains out-of-bounds far pointer.",
-                     return std::ptr::null());
+            decode_require!(bounds_check(*segment, ptr, ptr.offset(padWords)),
+                            "Message contains out-of-bounds far pointer.");
 
             let pad : *WirePointer = std::cast::transmute(ptr);
 
             if !(**reff).is_double_far() {
                 *reff = pad;
-                return (*pad).target();
+                return Ok((*pad).target());
             } else {
                 //# Landing pad is another far pointer. It is
                 //# followed by a tag describing the pointed-to
@@ -476,10 +489,10 @@ mod WireHelpers {
                 *segment =
                     (**segment).arena.try_get_segment((*pad).far_ref().segment_id.get());
 
-                return (**segment).get_start_ptr().offset((*pad).far_position_in_segment() as int);
+                return Ok((**segment).get_start_ptr().offset((*pad).far_position_in_segment() as int));
             }
         } else {
-            return refTarget;
+            return Ok(refTarget);
         }
     }
 
@@ -595,29 +608,29 @@ mod WireHelpers {
 
     pub unsafe fn total_size(mut segment : *SegmentReader,
                              mut reff : *WirePointer,
-                             mut nesting_limit : int) -> MessageSize {
+                             mut nesting_limit : int) -> DecodeResult<MessageSize> {
         let mut result = MessageSize { word_count : 0, cap_count : 0};
 
-        if (*reff).is_null() { return result };
+        if (*reff).is_null() { return Ok(result) };
 
-        require!(nesting_limit > 0, "Message is too deeply nested.", return result);
+        decode_require!(nesting_limit > 0, "Message is too deeply nested.");
 
         nesting_limit -= 1;
 
-        let ptr = follow_fars(&mut reff, (*reff).target(), &mut segment);
+        let ptr = try!(follow_fars(&mut reff, (*reff).target(), &mut segment));
 
         match (*reff).kind() {
             WirePointerKind::Struct => {
-                require!(bounds_check(segment, ptr, ptr.offset((*reff).struct_ref().word_size() as int)),
-                        "Message contains out-of-bounds struct pointer.",
-                         return result);
+                decode_require!(bounds_check(segment, ptr, ptr.offset((*reff).struct_ref().word_size() as int)),
+                                "Message contains out-of-bounds struct pointer.");
+
                 result.word_count += (*reff).struct_ref().word_size() as u64;
 
                 let pointer_section : *WirePointer =
                     std::cast::transmute(ptr.offset((*reff).struct_ref().data_size.get() as int));
                 let count : int = (*reff).struct_ref().ptr_count.get() as int;
                 for i in range(0, count) {
-                    result.plus_eq(total_size(segment, pointer_section.offset(i), nesting_limit));
+                    result.plus_eq(try!(total_size(segment, pointer_section.offset(i), nesting_limit)));
                 }
             }
             WirePointerKind::List => {
@@ -627,44 +640,39 @@ mod WireHelpers {
                         let total_words = round_bits_up_to_words(
                             (*reff).list_ref().element_count() as u64 *
                                 data_bits_per_element((*reff).list_ref().element_size()) as u64);
-                        require!(bounds_check(segment, ptr, ptr.offset(total_words as int)),
-                                 "Message contains out-of-bounds list pointer.",
-                                 return result);
+                        decode_require!(bounds_check(segment, ptr, ptr.offset(total_words as int)),
+                                        "Message contains out-of-bounds list pointer.");
                         result.word_count += total_words as u64;
                     }
                     Pointer => {
                         let count = (*reff).list_ref().element_count();
-                        require!(bounds_check(segment, ptr, ptr.offset((count * WORDS_PER_POINTER) as int)),
-                                 "Message contains out-of-bounds list pointer.",
-                                 return result);
+                        decode_require!(bounds_check(segment, ptr, ptr.offset((count * WORDS_PER_POINTER) as int)),
+                                        "Message contains out-of-bounds list pointer.");
 
                         result.word_count += count as u64 * WORDS_PER_POINTER as u64;
 
                         for i in range(0, count as int) {
                             result.plus_eq(
-                                total_size(segment, std::cast::transmute::<*Word,*WirePointer>(ptr).offset(i),
-                                           nesting_limit));
+                                try!(total_size(segment, std::cast::transmute::<*Word,*WirePointer>(ptr).offset(i),
+                                                nesting_limit)));
                         }
                     }
                     InlineComposite => {
                         let word_count = (*reff).list_ref().inline_composite_word_count();
-                        require!(bounds_check(segment, ptr,
-                                              ptr.offset(word_count as int + POINTER_SIZE_IN_WORDS as int)),
-                                 "Message contains out-of-bounds list pointer.",
-                                 return result);
+                        decode_require!(bounds_check(segment, ptr,
+                                                     ptr.offset(word_count as int + POINTER_SIZE_IN_WORDS as int)),
+                                        "Message contains out-of-bounds list pointer.");
 
                         result.word_count += word_count as u64 + POINTER_SIZE_IN_WORDS as u64;
 
                         let element_tag : *WirePointer = std::cast::transmute(ptr);
                         let count = (*element_tag).inline_composite_list_element_count();
 
-                        require!((*element_tag).kind() == WirePointerKind::Struct,
-                                 "Don't know how to handle non-STRUCT inline composite.",
-                                 return result);
+                        decode_require!((*element_tag).kind() == WirePointerKind::Struct,
+                                        "Don't know how to handle non-STRUCT inline composite.");
 
-                        require!((*element_tag).struct_ref().word_size() * count <= word_count,
-                                 "InlineComposite list's elements overrun its word count",
-                                 return result);
+                        decode_require!((*element_tag).struct_ref().word_size() * count <= word_count,
+                                        "InlineComposite list's elements overrun its word count");
 
                         let data_size = (*element_tag).struct_ref().data_size.get();
                         let pointer_count = (*element_tag).struct_ref().ptr_count.get();
@@ -675,8 +683,8 @@ mod WireHelpers {
 
                             for _ in range(0, pointer_count) {
                                 result.plus_eq(
-                                    total_size(segment, std::cast::transmute::<*Word,*WirePointer>(pos),
-                                               nesting_limit));
+                                    try!(total_size(segment, std::cast::transmute::<*Word,*WirePointer>(pos),
+                                                    nesting_limit)));
                                 pos = pos.offset(POINTER_SIZE_IN_WORDS as int);
                             }
                         }
@@ -695,7 +703,7 @@ mod WireHelpers {
             }
         }
 
-        result
+        Ok(result)
     }
 
     pub unsafe fn transfer_pointer(dst_segment : *mut SegmentBuilder, dst : *mut WirePointer,
@@ -1225,7 +1233,7 @@ mod WireHelpers {
 
     pub unsafe fn set_struct_pointer<'a>(mut segment : *mut SegmentBuilder,
                                          mut reff : *mut WirePointer,
-                                         value : StructReader) -> super::SegmentAnd<*mut Word> {
+                                         value : StructReader) -> DecodeResult<super::SegmentAnd<*mut Word>> {
         let data_size : WordCount = round_bits_up_to_words(value.data_size as u64);
         let total_size : WordCount = data_size + value.pointer_count as uint * WORDS_PER_POINTER;
 
@@ -1241,11 +1249,11 @@ mod WireHelpers {
 
         let pointer_section : *mut WirePointer = std::cast::transmute(ptr.offset(data_size as int));
         for i in range(0, value.pointer_count as int) {
-            copy_pointer(segment, pointer_section.offset(i), value.segment, value.pointers.offset(i),
-                         value.nesting_limit);
+            try!(copy_pointer(segment, pointer_section.offset(i), value.segment, value.pointers.offset(i),
+                              value.nesting_limit));
         }
 
-        super::SegmentAnd { segment : segment, value : ptr }
+        Ok(super::SegmentAnd { segment : segment, value : ptr })
     }
 
     pub unsafe fn set_capability_pointer(segment : *mut SegmentBuilder,
@@ -1256,7 +1264,7 @@ mod WireHelpers {
 
     pub unsafe fn set_list_pointer<'a>(mut segment : *mut SegmentBuilder,
                                        mut reff : *mut WirePointer,
-                                       value : ListReader) -> super::SegmentAnd<*mut Word> {
+                                       value : ListReader) -> DecodeResult<super::SegmentAnd<*mut Word>> {
         let total_size = round_bits_up_to_words((value.element_count * value.step) as u64);
 
         if value.step <= BITS_PER_WORD {
@@ -1267,9 +1275,9 @@ mod WireHelpers {
                 //# List of pointers.
                 (*reff).mut_list_ref().set(Pointer, value.element_count);
                 for i in range(0, value.element_count as int) {
-                    copy_pointer(segment, std::cast::transmute::<*mut Word,*mut WirePointer>(ptr).offset(i),
-                                 value.segment, std::cast::transmute::<*u8,*WirePointer>(value.ptr).offset(i),
-                                 value.nesting_limit);
+                    try!(copy_pointer(segment, std::cast::transmute::<*mut Word,*mut WirePointer>(ptr).offset(i),
+                                      value.segment, std::cast::transmute::<*u8,*WirePointer>(value.ptr).offset(i),
+                                      value.nesting_limit));
                 }
             } else {
                 //# List of data.
@@ -1287,7 +1295,7 @@ mod WireHelpers {
                 std::ptr::copy_memory(ptr, std::cast::transmute::<*u8,*Word>(value.ptr), total_size);
             }
 
-            super::SegmentAnd { segment : segment, value : ptr }
+            Ok(super::SegmentAnd { segment : segment, value : ptr })
         } else {
             //# List of structs.
             let ptr = allocate(&mut reff, &mut segment, total_size + POINTER_SIZE_IN_WORDS, WirePointerKind::List);
@@ -1309,47 +1317,36 @@ mod WireHelpers {
                 src = src.offset(data_size as int);
 
                 for _ in range(0, pointer_count) {
-                    copy_pointer(segment, std::cast::transmute(dst),
-                                 value.segment, std::cast::transmute(src), value.nesting_limit);
+                    try!(copy_pointer(segment, std::cast::transmute(dst),
+                                      value.segment, std::cast::transmute(src), value.nesting_limit));
                     dst = dst.offset(POINTER_SIZE_IN_WORDS as int);
                     src = src.offset(POINTER_SIZE_IN_WORDS as int);
                 }
             }
-            super::SegmentAnd { segment : segment, value : ptr }
+            Ok(super::SegmentAnd { segment : segment, value : ptr })
         }
     }
 
     pub unsafe fn copy_pointer(dst_segment : *mut SegmentBuilder, dst : *mut WirePointer,
                                mut src_segment : *SegmentReader, mut src : *WirePointer,
-                               nesting_limit : int) -> super::SegmentAnd<*mut Word> {
-
-        unsafe fn use_default(dst_segment : *mut SegmentBuilder, dst : *mut WirePointer)
-            -> super::SegmentAnd<*mut Word> {
-                std::ptr::zero_memory(dst, 1);
-                return super::SegmentAnd { segment : dst_segment, value : std::ptr::mut_null() };
-            }
-
+                               nesting_limit : int) -> DecodeResult<super::SegmentAnd<*mut Word>> {
 
         let src_target = (*src).target();
 
         if (*src).is_null() {
-            return use_default(dst_segment, dst);
+            std::ptr::zero_memory(dst, 1);
+            return Ok(super::SegmentAnd { segment : dst_segment, value : std::ptr::mut_null() });
         }
 
-        let mut ptr = follow_fars(&mut src, src_target, &mut src_segment);
-        if ptr.is_null() {
-            return use_default(dst_segment, dst);
-        }
+        let mut ptr = try!(follow_fars(&mut src, src_target, &mut src_segment));
 
         match (*src).kind() {
             WirePointerKind::Struct => {
-                require!(nesting_limit > 0,
-                        "Message is too deeply-nested or contains cycles.  See ReaderOptions.",
-                         return use_default(dst_segment, dst));
+                decode_require!(nesting_limit > 0,
+                                "Message is too deeply-nested or contains cycles.  See ReaderOptions.");
 
-                require!(bounds_check(src_segment, ptr, ptr.offset((*src).struct_ref().word_size() as int)),
-                        "Message contains out-of-bounds struct pointer.",
-                         return use_default(dst_segment, dst));
+                decode_require!(bounds_check(src_segment, ptr, ptr.offset((*src).struct_ref().word_size() as int)),
+                                "Message contains out-of-bounds struct pointer.");
 
                 set_struct_pointer(
                     dst_segment, dst,
@@ -1365,9 +1362,8 @@ mod WireHelpers {
             }
             WirePointerKind::List => {
                 let element_size = (*src).list_ref().element_size();
-                require!(nesting_limit > 0,
-                        "Message is too deeply-nested or contains cycles. See ReadOptions.",
-                         return use_default(dst_segment, dst));
+                decode_require!(nesting_limit > 0,
+                                "Message is too deeply-nested or contains cycles. See ReadOptions.");
 
                 if element_size == InlineComposite {
                     let word_count = (*src).list_ref().inline_composite_word_count();
@@ -1427,7 +1423,7 @@ mod WireHelpers {
                 match (*src_segment).arena.extract_cap((*src).cap_ref().index.get() as uint) {
                     Some(cap) => {
                         set_capability_pointer(dst_segment, dst, cap);
-                        return super::SegmentAnd { segment : dst_segment, value : std::ptr::mut_null() };
+                        return Ok(super::SegmentAnd { segment : dst_segment, value : std::ptr::mut_null() });
                     }
                     None => {
                         fail!("Message contained invalid capability pointer.")
@@ -1441,12 +1437,12 @@ mod WireHelpers {
     pub unsafe fn read_struct_pointer<'a>(mut segment: *SegmentReader,
                                           mut reff : *WirePointer,
                                           defaultValue : *Word,
-                                          nesting_limit : int) -> StructReader<'a> {
+                                          nesting_limit : int) -> DecodeResult<StructReader<'a>> {
 
         if (*reff).is_null() {
             if defaultValue.is_null() ||
                 (*std::cast::transmute::<*Word,*WirePointer>(defaultValue)).is_null() {
-                    return StructReader::new_default();
+                    return Ok(StructReader::new_default());
             }
 
             //segment = std::ptr::null();
@@ -1458,7 +1454,7 @@ mod WireHelpers {
 
         assert!(nesting_limit > 0, "Message is too deeply-nested or contains cycles.");
 
-        let ptr = follow_fars(&mut reff, refTarget, &mut segment);
+        let ptr = try!(follow_fars(&mut reff, refTarget, &mut segment));
 
         let data_size_words = (*reff).struct_ref().data_size.get();
 
@@ -1469,13 +1465,13 @@ mod WireHelpers {
                             ptr.offset((*reff).struct_ref().word_size() as int)),
                 "Message contains out-of-bounds struct pointer.");
 
-        StructReader {segment : segment,
-                      data : std::cast::transmute(ptr),
-                      pointers : std::cast::transmute(ptr.offset(data_size_words as int)),
-                      data_size : data_size_words as u32 * BITS_PER_WORD as BitCount32,
-                      pointer_count : (*reff).struct_ref().ptr_count.get(),
-                      bit0offset : 0,
-                      nesting_limit : nesting_limit - 1 }
+        Ok(StructReader {segment : segment,
+                         data : std::cast::transmute(ptr),
+                         pointers : std::cast::transmute(ptr.offset(data_size_words as int)),
+                         data_size : data_size_words as u32 * BITS_PER_WORD as BitCount32,
+                         pointer_count : (*reff).struct_ref().ptr_count.get(),
+                         bit0offset : 0,
+                         nesting_limit : nesting_limit - 1 })
      }
 
     #[inline]
@@ -1502,12 +1498,12 @@ mod WireHelpers {
                                       mut reff : *WirePointer,
                                       defaultValue : *Word,
                                       expectedElementSize : FieldSize,
-                                      nesting_limit : int ) -> ListReader<'a> {
+                                      nesting_limit : int ) -> DecodeResult<ListReader<'a>> {
 
         if (*reff).is_null() {
             if defaultValue.is_null() ||
                 (*std::cast::transmute::<*Word,*WirePointer>(defaultValue)).is_null() {
-                return ListReader::new_default();
+                return Ok(ListReader::new_default());
             }
             fail!("list default values unimplemented");
         }
@@ -1518,7 +1514,7 @@ mod WireHelpers {
            fail!("nesting limit exceeded");
         }
 
-        let mut ptr : *Word = follow_fars(&mut reff, refTarget, &mut segment);
+        let mut ptr : *Word = try!(follow_fars(&mut reff, refTarget, &mut segment));
 
         assert!((*reff).kind() == WirePointerKind::List,
                 "Message contains non-list pointer where list pointer was expected {:?}", reff);
@@ -1570,7 +1566,7 @@ mod WireHelpers {
                     InlineComposite => {}
                 }
 
-                ListReader {
+                Ok(ListReader {
                     segment : segment,
                     ptr : std::cast::transmute(ptr),
                     element_count : size,
@@ -1578,7 +1574,7 @@ mod WireHelpers {
                     struct_data_size : struct_ref.data_size.get() as u32 * (BITS_PER_WORD as u32),
                     struct_pointer_count : struct_ref.ptr_count.get() as u16,
                     nesting_limit : nesting_limit - 1
-                }
+                })
             }
             _ => {
 
@@ -1613,7 +1609,7 @@ mod WireHelpers {
                 assert!(expectedDataBitsPerElement <= data_size);
                 assert!(expectedPointersPerElement <= pointer_count)
 
-                ListReader {
+                Ok(ListReader {
                     segment : segment,
                     ptr : std::cast::transmute(ptr),
                     element_count : list_ref.element_count(),
@@ -1621,7 +1617,7 @@ mod WireHelpers {
                     struct_data_size : data_size as u32,
                     struct_pointer_count : pointer_count as u16,
                     nesting_limit : nesting_limit - 1
-                }
+                })
             }
         }
     }
@@ -1632,14 +1628,14 @@ mod WireHelpers {
                                         mut reff : *WirePointer,
                                         default_value : *Word,
                                         default_size : ByteCount
-                                        ) -> Text::Reader<'a> {
+                                        ) -> DecodeResult<Text::Reader<'a>> {
         if reff.is_null() || (*reff).is_null() {
-            return Text::new_reader(std::cast::transmute(default_value), default_size);
+            return Ok(Text::new_reader(std::cast::transmute(default_value), default_size));
         }
 
         let refTarget = (*reff).target();
 
-        let ptr : *Word = follow_fars(&mut reff, refTarget, &mut segment);
+        let ptr : *Word = try!(follow_fars(&mut reff, refTarget, &mut segment));
 
         let list_ref = (*reff).list_ref();
 
@@ -1660,7 +1656,7 @@ mod WireHelpers {
         assert!((*str_ptr.offset((size - 1) as int)) == 0u8,
                 "Message contains text that is not NUL-terminated");
 
-        Text::new_reader(str_ptr, size-1)
+        Ok(Text::new_reader(str_ptr, size-1))
     }
 
     #[inline]
@@ -1668,14 +1664,14 @@ mod WireHelpers {
                                         mut reff : *WirePointer,
                                         default_value : *Word,
                                         default_size : ByteCount
-                                        ) -> Data::Reader<'a> {
+                                        ) -> DecodeResult<Data::Reader<'a>> {
         if reff.is_null() || (*reff).is_null() {
-            return Data::new_reader(std::cast::transmute(default_value), default_size);
+            return Ok(Data::new_reader(std::cast::transmute(default_value), default_size));
         }
 
         let refTarget = (*reff).target();
 
-        let ptr : *Word = follow_fars(&mut reff, refTarget, &mut segment);
+        let ptr : *Word = try!(follow_fars(&mut reff, refTarget, &mut segment));
 
         let list_ref = (*reff).list_ref();
 
@@ -1691,7 +1687,7 @@ mod WireHelpers {
                              ptr.offset(round_bytes_up_to_words(size) as int)),
                 "Message contains out-of-bounds data pointer.");
 
-        Data::new_reader(std::cast::transmute(ptr), size)
+        Ok(Data::new_reader(std::cast::transmute(ptr), size))
     }
 
 
@@ -1740,7 +1736,7 @@ impl <'a> PointerReader<'a> {
         let reff : *WirePointer = if self.pointer.is_null() { zero_pointer() } else { self.pointer };
         unsafe {
             WireHelpers::read_struct_pointer(self.segment, reff,
-                                             default_value, self.nesting_limit)
+                                             default_value, self.nesting_limit).unwrap()
         }
     }
 
@@ -1750,19 +1746,19 @@ impl <'a> PointerReader<'a> {
             WireHelpers::read_list_pointer(self.segment,
                                            reff,
                                            default_value,
-                                           expected_element_size, self.nesting_limit)
+                                           expected_element_size, self.nesting_limit).unwrap()
         }
     }
 
     pub fn get_text(&self, default_value : *Word, default_size : ByteCount) -> Text::Reader<'a> {
         unsafe {
-            WireHelpers::read_text_pointer(self.segment, self.pointer, default_value, default_size)
+            WireHelpers::read_text_pointer(self.segment, self.pointer, default_value, default_size).unwrap()
         }
     }
 
     pub fn get_data(&self, default_value : *Word, default_size : ByteCount) -> Data::Reader<'a> {
         unsafe {
-            WireHelpers::read_data_pointer(self.segment, self.pointer, default_value, default_size)
+            WireHelpers::read_data_pointer(self.segment, self.pointer, default_value, default_size).unwrap()
         }
     }
 
@@ -1775,7 +1771,7 @@ impl <'a> PointerReader<'a> {
 
     pub fn total_size(&self) -> MessageSize {
         unsafe {
-            WireHelpers::total_size(self.segment, self.pointer, self.nesting_limit)
+            WireHelpers::total_size(self.segment, self.pointer, self.nesting_limit).unwrap()
         }
     }
 }
@@ -1876,13 +1872,13 @@ impl <'a> PointerBuilder<'a> {
 
     pub fn set_struct(&self, value : &StructReader) {
         unsafe {
-            WireHelpers::set_struct_pointer(self.segment, self.pointer, *value);
+            WireHelpers::set_struct_pointer(self.segment, self.pointer, *value).unwrap();
         }
     }
 
     pub fn set_list(&self, value : &ListReader) {
         unsafe {
-            WireHelpers::set_list_pointer(self.segment, self.pointer, *value);
+            WireHelpers::set_list_pointer(self.segment, self.pointer, *value).unwrap();
         }
     }
 
@@ -2022,7 +2018,7 @@ impl <'a> StructReader<'a>  {
         for i in range(0, self.pointer_count as int) {
             unsafe {
                 result.plus_eq(WireHelpers::total_size(self.segment, self.pointers.offset(i),
-                                                       self.nesting_limit));
+                                                       self.nesting_limit).unwrap());
             }
         }
 
