@@ -30,7 +30,7 @@ pub mod Node {
     }
     #[inline]
     pub fn get_display_name(&self) -> Text::Reader<'a> {
-      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
+      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
     }
     pub fn has_display_name(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -119,7 +119,7 @@ pub mod Node {
     }
     #[inline]
     pub fn get_display_name(&self) -> Text::Builder<'a> {
-      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
+      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
     }
     #[inline]
     pub fn set_display_name(&self, value : Text::Reader) {
@@ -316,7 +316,7 @@ pub mod Node {
     impl <'a> Reader<'a> {
       #[inline]
       pub fn get_name(&self) -> Text::Reader<'a> {
-        self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
+        self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
       }
       pub fn has_name(&self) -> bool {
         !self.reader.get_pointer_field(0).is_null()
@@ -343,7 +343,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_name(&self) -> Text::Builder<'a> {
-        self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
+        self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
       }
       #[inline]
       pub fn set_name(&self, value : Text::Reader) {
@@ -1001,7 +1001,7 @@ pub mod Field {
   impl <'a> Reader<'a> {
     #[inline]
     pub fn get_name(&self) -> Text::Reader<'a> {
-      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
+      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
     }
     pub fn has_name(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -1059,7 +1059,7 @@ pub mod Field {
     }
     #[inline]
     pub fn get_name(&self) -> Text::Builder<'a> {
-      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
+      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
     }
     #[inline]
     pub fn set_name(&self, value : Text::Reader) {
@@ -1454,7 +1454,7 @@ pub mod Enumerant {
   impl <'a> Reader<'a> {
     #[inline]
     pub fn get_name(&self) -> Text::Reader<'a> {
-      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
+      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
     }
     pub fn has_name(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -1488,7 +1488,7 @@ pub mod Enumerant {
     }
     #[inline]
     pub fn get_name(&self) -> Text::Builder<'a> {
-      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
+      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
     }
     #[inline]
     pub fn set_name(&self, value : Text::Reader) {
@@ -1562,7 +1562,7 @@ pub mod Method {
   impl <'a> Reader<'a> {
     #[inline]
     pub fn get_name(&self) -> Text::Reader<'a> {
-      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
+      self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
     }
     pub fn has_name(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -1604,7 +1604,7 @@ pub mod Method {
     }
     #[inline]
     pub fn get_name(&self) -> Text::Builder<'a> {
-      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
+      self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
     }
     #[inline]
     pub fn set_name(&self, value : Text::Reader) {
@@ -2370,7 +2370,7 @@ pub mod Value {
         }
         12 => {
           return std::option::Some(Text(
-            self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
+            self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
           ));
         }
         13 => {
@@ -2616,7 +2616,7 @@ pub mod Value {
         }
         12 => {
           return std::option::Some(Text(
-            self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
+            self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
           ));
         }
         13 => {
@@ -2922,7 +2922,7 @@ pub mod CodeGeneratorRequest {
       }
       #[inline]
       pub fn get_filename(&self) -> Text::Reader<'a> {
-        self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
+        self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
       }
       pub fn has_filename(&self) -> bool {
         !self.reader.get_pointer_field(0).is_null()
@@ -2960,7 +2960,7 @@ pub mod CodeGeneratorRequest {
       }
       #[inline]
       pub fn get_filename(&self) -> Text::Builder<'a> {
-        self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
+        self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
       }
       #[inline]
       pub fn set_filename(&self, value : Text::Reader) {
@@ -3029,7 +3029,7 @@ pub mod CodeGeneratorRequest {
         }
         #[inline]
         pub fn get_name(&self) -> Text::Reader<'a> {
-          self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
+          self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
         }
         pub fn has_name(&self) -> bool {
           !self.reader.get_pointer_field(0).is_null()
@@ -3060,7 +3060,7 @@ pub mod CodeGeneratorRequest {
         }
         #[inline]
         pub fn get_name(&self) -> Text::Builder<'a> {
-          self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
+          self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0).unwrap()
         }
         #[inline]
         pub fn set_name(&self, value : Text::Reader) {

@@ -7,6 +7,7 @@
 use rand::*;
 use common::*;
 use carsales_capnp::*;
+use capnp::layout::DecodeResult;
 
 pub type RequestBuilder<'a> = ParkingLot::Builder<'a>;
 pub type RequestReader<'a> = ParkingLot::Reader<'a>;
@@ -118,13 +119,14 @@ pub fn setup_request(rng : &mut FastRand, request : ParkingLot::Builder) -> u64 
     result
 }
 
-pub fn handle_request(request : ParkingLot::Reader, response : TotalValue::Builder) {
+pub fn handle_request(request : ParkingLot::Reader, response : TotalValue::Builder) -> DecodeResult<()> {
     let mut result = 0;
     let cars = request.get_cars();
     for i in range(0, cars.size()) {
         result += cars[i].car_value();
     }
     response.set_amount(result);
+    Ok(())
 }
 
 #[inline]

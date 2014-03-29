@@ -53,7 +53,7 @@ pub mod addressbook {
 
         for i in range(0, people.size()) {
             let person = people[i];
-            println!("{}: {}", person.get_name(), person.get_email());
+            println!("{}: {}", person.get_name().unwrap(), person.get_email().unwrap());
             let phones = person.get_phones();
             for j in range(0, phones.size()) {
                 let phone = phones[j];
@@ -63,22 +63,22 @@ pub mod addressbook {
                     Some(Person::PhoneNumber::Type::Work) => {"work"}
                     None => {"UNKNOWN"}
                 };
-                println!("  {} phone: {}", type_name, phone.get_number());
+                println!("  {} phone: {}", type_name, phone.get_number().unwrap());
             }
             match person.get_employment().which() {
-                Some(Person::Employment::Unemployed(())) => {
+                Ok(Person::Employment::Unemployed(())) => {
                     println!("  unemployed");
                 }
-                Some(Person::Employment::Employer(employer)) => {
+                Ok(Person::Employment::Employer(Ok(employer))) => {
                     println!("  employer: {}", employer);
                 }
-                Some(Person::Employment::School(school)) => {
+                Ok(Person::Employment::School(Ok(school))) => {
                     println!("  student at: {}", school);
                 }
-                Some(Person::Employment::SelfEmployed(())) => {
+                Ok(Person::Employment::SelfEmployed(())) => {
                     println!("  self-employed");
                 }
-                None => { }
+                _ => { }
             }
         }
         Ok(())

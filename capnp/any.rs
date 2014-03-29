@@ -9,6 +9,7 @@ pub mod AnyPointer {
     use std::vec::Vec;
 
     use capability::{ClientHook, FromClientHook, PipelineHook, PipelineOp};
+    use layout::{DecodeResult};
     use layout::{PointerReader, PointerBuilder, FromStructReader, FromStructBuilder,
                  HasStructSize, ToStructReader};
     use blob::{Text, Data};
@@ -33,7 +34,7 @@ pub mod AnyPointer {
             FromStructReader::new(self.reader.get_struct(std::ptr::null()))
         }
 
-        pub fn get_as_text(&self) -> Text::Reader<'a> {
+        pub fn get_as_text(&self) -> DecodeResult<Text::Reader<'a>> {
             self.reader.get_text(std::ptr::null(), 0)
         }
 

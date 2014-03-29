@@ -329,8 +329,8 @@ pub mod TextList {
         }
     }
 
-    impl <'a> Index<uint, Text::Reader<'a>> for Reader<'a> {
-        fn index(&self, index : &uint) -> Text::Reader<'a> {
+    impl <'a> Index<uint, DecodeResult<Text::Reader<'a>>> for Reader<'a> {
+        fn index(&self, index : &uint) -> DecodeResult<Text::Reader<'a>> {
             assert!(*index <  self.size());
             self.reader.get_pointer_element(*index).get_text(std::ptr::null(), 0)
         }
@@ -367,8 +367,8 @@ pub mod TextList {
         }
     }
 
-    impl <'a> Index<uint, Text::Builder<'a>> for Builder<'a> {
-        fn index(&self, index : &uint) -> Text::Builder<'a> {
+    impl <'a> Index<uint, DecodeResult<Text::Builder<'a>>> for Builder<'a> {
+        fn index(&self, index : &uint) -> DecodeResult<Text::Builder<'a>> {
             self.builder.get_pointer_element(*index).get_text(std::ptr::null(), 0)
         }
     }

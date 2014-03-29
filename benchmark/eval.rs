@@ -8,6 +8,7 @@ use std;
 use rand::*;
 use common::*;
 use eval_capnp::*;
+use capnp::layout::DecodeResult;
 
 pub type RequestBuilder<'a> = Expression::Builder<'a>;
 pub type ResponseBuilder<'a> = EvaluationResult::Builder<'a>;
@@ -49,14 +50,14 @@ fn make_expression(rng : &mut FastRand, exp : Expression::Builder, depth : u32) 
 
 fn evaluate_expression(exp : Expression::Reader) -> i32 {
     let left = match exp.get_left().which() {
-        Some(Expression::Left::Value(v)) => v,
-        Some(Expression::Left::Expression(e)) => evaluate_expression(e),
-        None => fail!("impossible")
+        Ok(Expression::Left::Value(v)) => v,
+        Ok(Expression::Left::Expression(e)) => evaluate_expression(e),
+        Err(_) => fail!("impossible")
     };
     let right = match exp.get_right().which() {
-        Some(Expression::Right::Value(v)) => v,
-        Some(Expression::Right::Expression(e)) => evaluate_expression(e),
-        None => fail!("impossible")
+        Ok(Expression::Right::Value(v)) => v,
+        Ok(Expression::Right::Expression(e)) => evaluate_expression(e),
+        Err(_) => fail!("impossible")
     };
 
     match exp.get_op() {
@@ -75,8 +76,9 @@ pub fn setup_request(rng : &mut FastRand, request : Expression::Builder) -> i32 
 }
 
 #[inline]
-pub fn handle_request(request : Expression::Reader, response : EvaluationResult::Builder) {
+pub fn handle_request(request : Expression::Reader, response : EvaluationResult::Builder) -> DecodeResult<()> {
     response.set_value(evaluate_expression(request));
+    Ok(())
 }
 
 #[inline]

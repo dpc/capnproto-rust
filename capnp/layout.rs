@@ -313,8 +313,9 @@ struct SegmentAnd<T> {
     value : T
 }
 
-pub struct DecodeError {
-    message : &'static str,
+pub enum DecodeError {
+    BadValue(&'static str),
+    UnsupportedVariant(u16),
 }
 
 pub type DecodeResult<T> = Result<T, DecodeError>;
@@ -330,14 +331,14 @@ mod WireHelpers {
     macro_rules! decode_require(
         ($condition:expr, $message:expr) => (
             if !($condition) {
-                return Err(DecodeError { message : $message });
+                return Err(BadValue($message));
             }
             );
         )
 
     macro_rules! decode_require_fail(
         ($message:expr) => (
-                return Err(DecodeError { message : $message });
+                return Err(BadValue($message));
             );
         )
 
@@ -1135,28 +1136,28 @@ mod WireHelpers {
     pub unsafe fn get_writable_text_pointer<'a>(mut reff : *mut WirePointer,
                                                 mut segment : *mut SegmentBuilder,
                                                 default_value : *Word,
-                                                default_size : ByteCount) -> Text::Builder<'a> {
+                                                default_size : ByteCount) -> DecodeResult<Text::Builder<'a>> {
         if (*reff).is_null() {
             if default_size == 0 {
-                return Text::Builder::new(std::ptr::mut_null(), 0);
+                return Ok(Text::Builder::new(std::ptr::mut_null(), 0));
             } else {
                 let builder = init_text_pointer(reff, segment, default_size).value;
                 std::ptr::copy_nonoverlapping_memory::<u8>(builder.as_ptr(),
                                                            std::cast::transmute(default_value),
                                                            default_size);
-                return builder;
+                return Ok(builder);
             }
         } else {
             let ref_target = (*reff).mut_target();
             let ptr = follow_builder_fars(&mut reff, ref_target, &mut segment);
 
-            assert!((*reff).kind() == WirePointerKind::List,
-                    "Called getText\\{Field,Element\\}() but existing pointer is not a list.");
-            assert!((*reff).list_ref().element_size() == Byte,
-                    "Called getText\\{Field,Element\\}() but existing list pointer is not byte-sized.");
+            decode_require!((*reff).kind() == WirePointerKind::List,
+                            "Called getText\\{Field,Element\\}() but existing pointer is not a list.");
+            decode_require!((*reff).list_ref().element_size() == Byte,
+                            "Called getText\\{Field,Element\\}() but existing list pointer is not byte-sized.");
 
             //# Subtract 1 from the size for the NUL terminator.
-            return Text::Builder::new(std::cast::transmute(ptr), (*reff).list_ref().element_count() - 1);
+            return Ok(Text::Builder::new(std::cast::transmute(ptr), (*reff).list_ref().element_count() - 1));
         }
 
     }
@@ -1737,9 +1738,9 @@ impl <'a> PointerReader<'a> {
         }
     }
 
-    pub fn get_text(&self, default_value : *Word, default_size : ByteCount) -> Text::Reader<'a> {
+    pub fn get_text(&self, default_value : *Word, default_size : ByteCount) -> DecodeResult<Text::Reader<'a>> {
         unsafe {
-            WireHelpers::read_text_pointer(self.segment, self.pointer, default_value, default_size).unwrap()
+            WireHelpers::read_text_pointer(self.segment, self.pointer, default_value, default_size)
         }
     }
 
@@ -1803,7 +1804,7 @@ impl <'a> PointerBuilder<'a> {
         }
     }
 
-    pub fn get_text(&self, default_value : *Word, default_size : ByteCount) -> Text::Builder<'a> {
+    pub fn get_text(&self, default_value : *Word, default_size : ByteCount) -> DecodeResult<Text::Builder<'a>> {
         unsafe {
             WireHelpers::get_writable_text_pointer(
                 self.pointer, self.segment, default_value, default_size)

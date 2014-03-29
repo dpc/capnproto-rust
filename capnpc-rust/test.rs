@@ -133,11 +133,11 @@ mod tests {
         assert_eq!(test_blob_reader.has_text_field(), true);
         assert_eq!(test_blob_reader.has_data_field(), true);
 
-        assert_eq!(test_blob_reader.get_text_field(), "abcdefghi");
+        assert_eq!(test_blob_reader.get_text_field().unwrap(), "abcdefghi");
         assert!(test_blob_reader.get_data_field() == [0u8, 1u8, 2u8, 3u8, 4u8]);
 
         let text_builder = test_blob.init_text_field(10);
-        assert_eq!(test_blob.as_reader().get_text_field(),
+        assert_eq!(test_blob.as_reader().get_text_field().unwrap(),
                    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
         let mut writer = std::io::BufWriter::new(text_builder.as_mut_bytes());
         writer.write("aabbccddee".as_bytes()).unwrap();
@@ -150,13 +150,13 @@ mod tests {
         }
         data_builder[0] = 4u8;
 
-        assert_eq!(test_blob.as_reader().get_text_field(), "aabbccddee");
+        assert_eq!(test_blob.as_reader().get_text_field().unwrap(), "aabbccddee");
         assert!(test_blob.as_reader().get_data_field() == [4u8,5u8,5u8,5u8,5u8,5u8,5u8]);
 
-        let bytes = test_blob.get_text_field().as_mut_bytes();
+        let bytes = test_blob.get_text_field().unwrap().as_mut_bytes();
         bytes[4] = 'z' as u8;
         bytes[5] = 'z' as u8;
-        assert_eq!(test_blob.as_reader().get_text_field(), "aabbzzddee");
+        assert_eq!(test_blob.as_reader().get_text_field().unwrap(), "aabbzzddee");
 
         test_blob.get_data_field()[2] = 10;
         assert!(test_blob.as_reader().get_data_field() == [4u8,5u8,10u8,5u8,5u8,5u8,5u8]);
@@ -273,8 +273,8 @@ mod tests {
 
         let text_list = complex_list_reader.get_text_list();
         assert_eq!(text_list.size(), 2);
-        assert_eq!(text_list[0], "garply");
-        assert_eq!(text_list[1], "foo");
+        assert_eq!(text_list[0].unwrap(), "garply");
+        assert_eq!(text_list[1].unwrap(), "foo");
 
         let data_list = complex_list_reader.get_data_list();
         assert_eq!(data_list.size(), 2);
@@ -302,7 +302,7 @@ mod tests {
         assert!(enum_list_list[1][0] == Some(AnEnum::Foo));
         assert!(enum_list_list[1][1] == Some(AnEnum::Qux));
 
-        assert!(complex_list_reader.get_text_list_list()[0][0] == "abc");
+        assert!(complex_list_reader.get_text_list_list()[0][0].unwrap() == "abc");
         assert!(complex_list_reader.get_data_list_list()[0][0] == [255, 254, 253]);
 
         assert!(complex_list_reader.get_struct_list_list()[0][0].get_int8_field() == -1);
@@ -346,7 +346,7 @@ mod tests {
 
         {
             let reader = test_any_pointer.as_reader();
-            assert_eq!(reader.get_any_pointer_field().get_as_text(), "xyzzy");
+            assert_eq!(reader.get_any_pointer_field().get_as_text().unwrap(), "xyzzy");
         }
 
         any_pointer.init_as_struct::<TestEmptyStruct::Builder>();
@@ -400,17 +400,17 @@ mod tests {
 
         union_struct.get_union0().set_u0f0s0(());
         match union_struct.get_union0().which() {
-            Some(TestUnion::Union0::U0f0s0(())) => {}
+            Ok(TestUnion::Union0::U0f0s0(())) => {}
             _ => fail!()
         }
         union_struct.init_union0().set_u0f0s1(true);
         match union_struct.get_union0().which() {
-            Some(TestUnion::Union0::U0f0s1(true)) => {}
+            Ok(TestUnion::Union0::U0f0s1(true)) => {}
             _ => fail!()
         }
         union_struct.init_union0().set_u0f0s8(127);
         match union_struct.get_union0().which() {
-            Some(TestUnion::Union0::U0f0s8(127)) => {}
+            Ok(TestUnion::Union0::U0f0s8(127)) => {}
             _ => fail!()
         }
 

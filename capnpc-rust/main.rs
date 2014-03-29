@@ -228,6 +228,7 @@ fn generate_import_statements(rootName : &str) -> FormattedText {
         Line(~"use capnp::capability::{FromClientHook, FromTypelessPipeline};"),
         Line(~"use capnp::blob::{Text, Data};"),
         Line(~"use capnp::layout;"),
+        Line(~"use capnp::layout::{DecodeResult, UnsupportedVariant};"),
         Line(~"use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};"),
         Line(~"use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};"),
         Line(format!("use {};", rootName))
@@ -353,7 +354,7 @@ fn getter_text (_node_map : &collections::hashmap::HashMap<u64, schema_capnp::No
                 Some((Type::Float32(()), Value::Float32(f))) => return common_case("f32", member, offset, f),
                 Some((Type::Float64(()), Value::Float64(f))) => return common_case("f64", member, offset, f),
                 Some((Type::Text(()), _)) => {
-                    return (format!("Text::{}", moduleWithVar),
+                    return (format!("DecodeResult<Text::{}>", moduleWithVar),
                             Line(format!("self.{}.get_pointer_field({}).get_text(std::ptr::null(), 0)",
                                       member, offset)));
                 }
@@ -824,7 +825,7 @@ fn generate_union(node_map : &collections::hashmap::HashMap<u64, schema_capnp::N
 
         getter_interior.push(Branch(vec!(
                     Line(format!("{} => \\{", dvalue)),
-                    Indent(~Line(format!("return std::option::Some({}(", enumerantName.clone()))),
+                    Indent(~Line(format!("return Ok({}(", enumerantName.clone()))),
                     Indent(~Indent(~get)),
                     Indent(~Line(~"));")),
                     Line(~"}")
@@ -857,7 +858,7 @@ fn generate_union(node_map : &collections::hashmap::HashMap<u64, schema_capnp::N
                             else {box ""} );
 
 
-    getter_interior.push(Line(~"_ => return std::option::None"));
+    getter_interior.push(Line(~"d => return Err(UnsupportedVariant(d))"));
 
     interior.push(
         Branch(vec!(Line(format!("pub enum {} \\{", enum_name)),
@@ -888,7 +889,7 @@ fn generate_union(node_map : &collections::hashmap::HashMap<u64, schema_capnp::N
 
     let getter_result =
         Branch(vec!(Line(~"#[inline]"),
-                    Line(format!("pub fn which(&self) -> std::option::Option<{}> \\{",
+                    Line(format!("pub fn which(&self) -> DecodeResult<{}> \\{",
                                  concrete_type)),
                     Indent(~Branch(vec!(
                         Line(format!("match self.{}.get_data_field::<u16>({}) \\{", field_name, doffset)),

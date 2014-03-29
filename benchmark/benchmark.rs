@@ -120,7 +120,7 @@ macro_rules! pass_by_object(
                 let expected = $testcase::setup_request(&mut rng, request);
 
                 let requestReader = request.as_reader();
-                $testcase::handle_request(requestReader, response);
+                $testcase::handle_request(requestReader, response).unwrap();
 
                 let responseReader = response.as_reader();
                 if !$testcase::check_response(responseReader, expected) {
@@ -154,7 +154,7 @@ macro_rules! pass_by_bytes(
                     capnp::message::DefaultReaderOptions);
 
                 let requestReader : $testcase::RequestReader = messageReader.get_root();
-                $testcase::handle_request(requestReader, response);
+                $testcase::handle_request(requestReader, response).unwrap();
 
                 {
                     let mut writer = capnp::io::ArrayOutputStream::new(responseBytes.as_mut_slice());
@@ -185,7 +185,7 @@ macro_rules! server(
                     &mut inBuffered,
                     capnp::message::DefaultReaderOptions);
                 let requestReader : $testcase::RequestReader = messageReader.get_root();
-                $testcase::handle_request(requestReader, response);
+                $testcase::handle_request(requestReader, response).unwrap();
 
                 $compression::write_buffered(&mut outBuffered, &messageRes);
                 outBuffered.flush().unwrap();

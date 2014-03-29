@@ -9,6 +9,7 @@ use std;
 use rand::*;
 use common::*;
 use catrank_capnp::*;
+use capnp::layout::DecodeResult;
 
 pub type RequestBuilder<'a> = SearchResultList::Builder<'a>;
 pub type ResponseBuilder<'a> = SearchResultList::Builder<'a>;
@@ -71,17 +72,17 @@ pub fn setup_request(rng : &mut FastRand, request : SearchResultList::Builder) -
 }
 
 pub fn handle_request(request : SearchResultList::Reader,
-                     response : SearchResultList::Builder) {
+                     response : SearchResultList::Builder) -> DecodeResult<()> {
     let mut scoredResults : ~[ScoredResult] = ~[];
 
     let results = request.get_results();
     for i in range(0, results.size()) {
         let result = results[i];
         let mut score = result.get_score();
-        if result.get_snippet().contains(" cat ") {
+        if try!(result.get_snippet()).contains(" cat ") {
             score *= 10000.0;
         }
-        if result.get_snippet().contains(" dog ") {
+        if try!(result.get_snippet()).contains(" dog ") {
             score /= 10000.0;
         }
         scoredResults.push(ScoredResult {score : score, result : result});
@@ -94,9 +95,11 @@ pub fn handle_request(request : SearchResultList::Reader,
         let item = list[i];
         let result = scoredResults[i];
         item.set_score(result.score);
-        item.set_url(result.result.get_url());
-        item.set_snippet(result.result.get_snippet());
+        item.set_url(try!(result.result.get_url()));
+        item.set_snippet(try!(result.result.get_snippet()));
     }
+
+    Ok(())
 }
 
 pub fn check_response(response : SearchResultList::Reader, expectedGoodCount : int) -> bool {
