@@ -56,7 +56,7 @@ fn evaluate_impl(
         }
         Some(Calculator::Expression::Call(call)) => {
             let func = call.get_function();
-            let call_params = call.get_params();
+            let call_params = call.get_params().unwrap();
             let mut param_values = Vec::new();
             for ii in range(0, call_params.size()) {
                 let x = evaluate_impl(call_params[ii], params);
@@ -89,12 +89,13 @@ impl FunctionImpl {
 impl Calculator::Function::Server for FunctionImpl {
     fn call(&mut self, mut context : Calculator::Function::CallContext) {
         let (params, results) = context.get();
-        assert!(params.get_params().size() == self.param_count,
+        let params = params.get_params().unwrap();
+        assert!(params.size() == self.param_count,
                 "Wrong number of parameters.");
 
         {
-            let expression = self.body.get_root::<Calculator::Expression::Builder>().as_reader();
-            results.set_value(evaluate_impl(expression, Some(params.get_params())));
+            let expression = self.body.get_root::<Calculator::Expression::Builder>().unwrap().as_reader();
+            results.set_value(evaluate_impl(expression, Some(params)));
         }
         context.done();
     }
@@ -107,7 +108,7 @@ pub struct OperatorImpl {
 impl Calculator::Function::Server for OperatorImpl {
     fn call(&mut self, mut context : Calculator::Function::CallContext) {
         let (params, results) = context.get();
-        let params = params.get_params();
+        let params = params.get_params().unwrap();
         assert!(params.size() == 2, "Wrong number of parameters: {}", params.size());
 
         let result = match self.op {
@@ -131,7 +132,7 @@ impl Calculator::Server for CalculatorImpl {
         results.set_value(
             FromServer::new(
                 None::<EzRpcServer>,
-                ~ValueImpl::new(evaluate_impl(params.get_expression(), None))));
+                ~ValueImpl::new(evaluate_impl(params.get_expression().unwrap(), None))));
         context.done();
     }
     fn def_function(&mut self, mut context : Calculator::DefFunctionContext) {
@@ -139,7 +140,7 @@ impl Calculator::Server for CalculatorImpl {
         results.set_func(
             FromServer::new(
                 None::<EzRpcServer>,
-                ~FunctionImpl::new(params.get_param_count() as uint, params.get_body())));
+                ~FunctionImpl::new(params.get_param_count() as uint, params.get_body().unwrap())));
         context.done();
     }
     fn get_operator(&mut self, mut context : Calculator::GetOperatorContext) {

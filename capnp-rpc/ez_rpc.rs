@@ -49,11 +49,11 @@ impl EzRpcClient {
         self.rpc_chan.send(Outgoing(outgoing));
 
         let reader = answer_port.recv();
-        let message = reader.get_root::<Message::Reader>();
+        let message = reader.get_root::<Message::Reader>().unwrap();
         let client = match message.which() {
-            Some(Message::Return(ret)) => {
+            Some(Message::Return(Ok(ret))) => {
                 match ret.which() {
-                    Some(Return::Results(payload)) => {
+                    Some(Return::Results(Ok(payload))) => {
                         payload.get_content().get_as_capability::<T>()
                     }
                     _ => { fail!() }

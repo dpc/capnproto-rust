@@ -53,11 +53,11 @@ impl Answer {
 
     fn do_call(answer_message : &mut ~MallocMessageBuilder, interface_id : u64, method_id : u16,
                ops : Vec<PipelineOp::Type>, context : ~CallContextHook:Send) {
-        let root : Message::Builder = answer_message.get_root();
+        let root : Message::Builder = answer_message.get_root().unwrap();
         match root.which() {
-            Some(Message::Return(ret)) => {
+            Some(Message::Return(Ok(ret))) => {
                 match ret.which() {
-                    Some(Return::Results(payload)) => {
+                    Some(Return::Results(Ok(payload))) => {
                         let hook = payload.get_content().as_reader().
                             get_pipelined_cap(ops.as_slice());
                         hook.call(interface_id, method_id, context);
@@ -139,7 +139,7 @@ pub struct RpcConnectionState {
 fn client_hooks_of_payload(payload : Payload::Reader,
                            rpc_chan : &std::comm::Sender<RpcEvent>) -> Vec<Option<~ClientHook:Send>> {
     let mut result = Vec::new();
-    let cap_table = payload.get_cap_table();
+    let cap_table = payload.get_cap_table().unwrap();
     for ii in range(0, cap_table.size()) {
         match cap_table[ii].which() {
             Some(CapDescriptor::None(())) => {
@@ -159,6 +159,7 @@ fn client_hooks_of_payload(payload : Payload::Reader,
                 fail!()
             }
             Some(CapDescriptor::ReceiverAnswer(promised_answer)) => {
+                let promised_answer = promised_answer.unwrap();
                 result.push(Some(
                         (box PromisedAnswerClient {
                                 rpc_chan : rpc_chan.clone(),
@@ -178,13 +179,13 @@ fn populate_cap_table(message : &mut OwnedSpaceMessageReader,
                       rpc_chan : &std::comm::Sender<RpcEvent>) {
     let mut the_cap_table : Vec<Option<~ClientHook:Send>> = Vec::new();
     {
-        let root = message.get_root::<Message::Reader>();
+        let root = message.get_root::<Message::Reader>().unwrap();
 
         match root.which() {
             Some(Message::Return(ret)) => {
-                match ret.which() {
+                match ret.unwrap().which() {
                     Some(Return::Results(payload)) => {
-                        the_cap_table = client_hooks_of_payload(payload, rpc_chan);
+                        the_cap_table = client_hooks_of_payload(payload.unwrap(), rpc_chan);
                     }
                     Some(Return::Exception(_e)) => {
                     }
@@ -193,7 +194,7 @@ fn populate_cap_table(message : &mut OwnedSpaceMessageReader,
 
             }
             Some(Message::Call(call)) => {
-               the_cap_table = client_hooks_of_payload(call.get_params(), rpc_chan);
+               the_cap_table = client_hooks_of_payload(call.unwrap().get_params().unwrap(), rpc_chan);
             }
             Some(Message::Unimplemented(_)) => {
             }
@@ -210,7 +211,7 @@ fn populate_cap_table(message : &mut OwnedSpaceMessageReader,
 
 fn get_pipeline_ops(promised_answer : PromisedAnswer::Reader) -> Vec<PipelineOp::Type> {
     let mut result = Vec::new();
-    let transform = promised_answer.get_transform();
+    let transform = promised_answer.get_transform().unwrap();
     for ii in range(0, transform.size()) {
         match transform[ii].which() {
             Some(PromisedAnswer::Op::Noop(())) => result.push(PipelineOp::Noop),
@@ -277,9 +278,9 @@ impl RpcConnectionState {
                 loop {
                     match port.recv() {
                         AnswerSent(mut message) => {
-                            let root = message.get_root::<Message::Builder>();
+                            let root = message.get_root::<Message::Builder>().unwrap();
                             let answer_id_opt = match root.which() {
-                                Some(Message::Return(ret)) => {
+                                Some(Message::Return(Ok(ret))) => {
                                     Some(ret.get_answer_id())
                                 }
                                 _ => {None}
@@ -301,22 +302,23 @@ impl RpcConnectionState {
                             }
 
                             populate_cap_table(message, &rpc_chan);
-                            let root = message.get_root::<Message::Reader>();
+                            let root = message.get_root::<Message::Reader>().unwrap();
                             let receiver = match root.which() {
                                 Some(Message::Unimplemented(_)) => {
                                     println!("unimplemented");
                                     Nobody
                                 }
                                 Some(Message::Abort(exc)) => {
-                                    println!("abort: {}", exc.get_reason());
+                                    println!("abort: {}", exc.unwrap().get_reason().unwrap());
                                     Nobody
                                 }
                                 Some(Message::Call(call)) => {
-                                    match call.get_target().which() {
+                                    match call.unwrap().get_target().unwrap().which() {
                                         Some(MessageTarget::ImportedCap(import_id)) => {
                                             ExportReceiver(import_id)
                                         }
                                         Some(MessageTarget::PromisedAnswer(promised_answer)) => {
+                                            let promised_answer = promised_answer.unwrap();
                                             PromisedAnswerReceiver(
                                                 promised_answer.get_question_id(),
                                                 get_pipeline_ops(promised_answer))
@@ -328,7 +330,7 @@ impl RpcConnectionState {
                                 }
 
                                 Some(Message::Return(ret)) => {
-                                    QuestionReceiver(ret.get_answer_id())
+                                    QuestionReceiver(ret.unwrap().get_answer_id())
                                 }
                                 Some(Message::Finish(_finish)) => {
                                     println!("finish");
@@ -350,9 +352,10 @@ impl RpcConnectionState {
                                     Nobody
                                 }
                                 Some(Message::Restore(restore)) => {
+                                    let restore = restore.unwrap();
                                     let (chan, port) = std::comm::channel();
                                     vat_chan.send(
-                                        VatEventRestore(restore.get_object_id().get_as_text().to_owned(), chan));
+                                        VatEventRestore(restore.get_object_id().get_as_text().unwrap().to_owned(), chan));
                                     let clienthook = port.recv().unwrap();
                                     let idx = exports.slots.len();
                                     exports.slots.push(Export { hook : clienthook.copy() });
@@ -365,7 +368,7 @@ impl RpcConnectionState {
                                         ret.set_answer_id(answer_id);
                                         let payload = ret.init_results();
                                         payload.init_cap_table(1);
-                                        payload.get_cap_table()[0].set_sender_hosted(idx as u32);
+                                        payload.get_cap_table().unwrap()[0].set_sender_hosted(idx as u32);
                                         payload.get_content().set_as_capability(clienthook);
 
                                     }
@@ -394,9 +397,9 @@ impl RpcConnectionState {
 
                             fn get_call_ids(message : &OwnedSpaceMessageReader)
                                                         -> (QuestionId, u64, u16) {
-                                let root : Message::Reader = message.get_root();
+                                let root : Message::Reader = message.get_root().unwrap();
                                 match root.which() {
-                                    Some(Message::Call(call)) =>
+                                    Some(Message::Call(Ok(call))) =>
                                         (call.get_question_id(), call.get_interface_id(), call.get_method_id()),
                                     _ => fail!(),
                                 }
@@ -431,17 +434,17 @@ impl RpcConnectionState {
                         Outgoing(OutgoingMessage { message : mut m,
                                                    answer_chan,
                                                    question_chan} ) => {
-                            let root = m.get_root::<Message::Builder>();
+                            let root = m.get_root::<Message::Builder>().unwrap();
                             // add a question to the question table
                             match root.which() {
                                 Some(Message::Return(_)) => {}
-                                Some(Message::Call(call)) => {
+                                Some(Message::Call(Ok(call))) => {
                                     call.set_question_id(questions.slots.len() as u32);
                                     questions.slots.push(Question {is_awaiting_return : true,
                                                                    chan : answer_chan} );
                                     question_chan.try_send(call.get_question_id());
                                 }
-                                Some(Message::Restore(res)) => {
+                                Some(Message::Restore(Ok(res))) => {
                                     res.set_question_id(questions.slots.len() as u32);
                                     questions.slots.push(Question {is_awaiting_return : true,
                                                                    chan : answer_chan} );
@@ -461,9 +464,9 @@ impl RpcConnectionState {
                             // XXX
                             question_chan.send(0);
 
-                            let root = m.get_root::<Message::Builder>();
+                            let root = m.get_root::<Message::Builder>().unwrap();
                             let (interface_id, method_id) = match root.which() {
-                                Some(Message::Call(call)) => {
+                                Some(Message::Call(Ok(call))) => {
                                     (call.get_interface_id(), call.get_method_id())
                                 }
                                 _ => {
@@ -521,7 +524,7 @@ impl ClientHook for ImportClient {
                 -> capability::Request<AnyPointer::Builder, AnyPointer::Reader, AnyPointer::Pipeline> {
         let mut message = box MallocMessageBuilder::new_default();
         {
-            let root : Message::Builder = message.get_root();
+            let root : Message::Builder = message.get_root().unwrap();
             let call = root.init_call();
             call.set_interface_id(interface_id);
             call.set_method_id(method_id);
@@ -561,7 +564,7 @@ impl ClientHook for PipelineClient {
                 -> capability::Request<AnyPointer::Builder, AnyPointer::Reader, AnyPointer::Pipeline> {
         let mut message = box MallocMessageBuilder::new_default();
         {
-            let root : Message::Builder = message.get_root();
+            let root : Message::Builder = message.get_root().unwrap();
             let call = root.init_call();
             call.set_interface_id(interface_id);
             call.set_method_id(method_id);
@@ -609,7 +612,7 @@ impl ClientHook for PromisedAnswerClient {
                 -> capability::Request<AnyPointer::Builder, AnyPointer::Reader, AnyPointer::Pipeline> {
         let mut message = box MallocMessageBuilder::new_default();
         {
-            let root : Message::Builder = message.get_root();
+            let root : Message::Builder = message.get_root().unwrap();
             let call = root.init_call();
             call.set_interface_id(interface_id);
             call.set_method_id(method_id);
@@ -684,14 +687,14 @@ fn write_outgoing_cap_table(rpc_chan : &std::comm::Sender<RpcEvent>, message : &
         }
         caps
     };
-    let root : Message::Builder = message.get_root();
+    let root : Message::Builder = message.get_root().unwrap();
     match root.which() {
-        Some(Message::Call(call)) => {
-            write_payload(rpc_chan, cap_table.as_slice(), call.get_params())
+        Some(Message::Call(Ok(call))) => {
+            write_payload(rpc_chan, cap_table.as_slice(), call.get_params().unwrap())
         }
-        Some(Message::Return(ret)) => {
+        Some(Message::Return(Ok(ret))) => {
             match ret.which() {
-                Some(Return::Results(payload)) => {
+                Some(Return::Results(Ok(payload))) => {
                     write_payload(rpc_chan, cap_table.as_slice(), payload);
                 }
                 _ => {}
@@ -815,9 +818,9 @@ impl RpcCallContext {
     pub fn new(params_message : ~OwnedSpaceMessageReader,
                rpc_chan : std::comm::Sender<RpcEvent>) -> RpcCallContext {
         let answer_id = {
-            let root : Message::Reader = params_message.get_root();
+            let root : Message::Reader = params_message.get_root().unwrap();
             match root.which() {
-                Some(Message::Call(call)) => {
+                Some(Message::Call(Ok(call))) => {
                     call.get_question_id()
                 }
                 _ => fail!(),
@@ -843,21 +846,21 @@ impl CallContextHook for RpcCallContext {
     fn get<'a>(&'a mut self) -> (AnyPointer::Reader<'a>, AnyPointer::Builder<'a>) {
 
         let params = {
-            let root : Message::Reader = self.params_message.get_root();
+            let root : Message::Reader = self.params_message.get_root().unwrap();
             match root.which() {
-                Some(Message::Call(call)) => {
-                    call.get_params().get_content()
+                Some(Message::Call(Ok(call))) => {
+                    call.get_params().unwrap().get_content()
                 }
                 _ => fail!(),
             }
         };
 
         let results = {
-            let root : Message::Builder = self.results_message.get_root();
+            let root : Message::Builder = self.results_message.get_root().unwrap();
             match root.which() {
-                Some(Message::Return(ret)) => {
+                Some(Message::Return(Ok(ret))) => {
                     match ret.which() {
-                        Some(Return::Results(results)) => {
+                        Some(Return::Results(Ok(results))) => {
                             results.get_content()
                         }
                         _ => fail!(),
@@ -919,21 +922,21 @@ impl CallContextHook for PromisedAnswerRpcCallContext {
     fn get<'a>(&'a mut self) -> (AnyPointer::Reader<'a>, AnyPointer::Builder<'a>) {
 
         let params = {
-            let root : Message::Reader = self.params_message.get_root();
+            let root : Message::Reader = self.params_message.get_root().unwrap();
             match root.which() {
-                Some(Message::Call(call)) => {
-                    call.get_params().get_content()
+                Some(Message::Call(Ok(call))) => {
+                    call.get_params().unwrap().get_content()
                 }
                 _ => fail!(),
             }
         };
 
         let results = {
-            let root : Message::Builder = self.results_message.get_root();
+            let root : Message::Builder = self.results_message.get_root().unwrap();
             match root.which() {
-                Some(Message::Return(ret)) => {
+                Some(Message::Return(Ok(ret))) => {
                     match ret.which() {
-                        Some(Return::Results(results)) => {
+                        Some(Return::Results(Ok(results))) => {
                             results.get_content()
                         }
                         _ => fail!(),

@@ -76,9 +76,9 @@ pub trait InitRequest<'a, T> {
 impl <'a, Params : FromStructBuilder<'a> + HasStructSize, Results, Pipeline> InitRequest<'a, Params>
 for Request<Params, Results, Pipeline> {
     fn init(&'a mut self) -> Params {
-        let message : Message::Builder = self.hook.message().get_root();
+        let message : Message::Builder = self.hook.message().get_root().unwrap();
         match message.which() {
-            Some(Message::Call(call)) => {
+            Some(Message::Call(Ok(call))) => {
                 let params = call.init_params();
                 params.get_content().init_as_struct()
             }
@@ -99,15 +99,15 @@ for ResultFuture<Results, Pipeline> {
         match self.answer_result {
             None => Err(~"answer channel closed"),
             Some(ref message) => {
-                let root : Message::Reader = message.get_root();
+                let root : Message::Reader = message.get_root().unwrap();
                 match root.which() {
-                    Some(Message::Return(ret)) => {
+                    Some(Message::Return(Ok(ret))) => {
                         match ret.which() {
-                            Some(Return::Results(res)) => {
-                                Ok(res.get_content().get_as_struct())
+                            Some(Return::Results(Ok(res))) => {
+                                Ok(res.get_content().get_as_struct().unwrap())
                             }
-                            Some(Return::Exception(e)) => {
-                                Err(e.get_reason().to_owned())
+                            Some(Return::Exception(Ok(e))) => {
+                                Err(e.get_reason().unwrap().to_owned())
                             }
                             _ => fail!(),
                         }

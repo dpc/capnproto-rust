@@ -15,7 +15,7 @@ pub struct PowerFunction;
 impl Calculator::Function::Server for PowerFunction {
     fn call(&mut self, mut context : Calculator::Function::CallContext) {
         let (params, results) = context.get();
-        let params = params.get_params();
+        let params = params.get_params().unwrap();
         assert!(params.size() == 2, "Wrong number of parameters");
         results.set_value(std::f64::pow(params[0], params[1]));
         context.done();
@@ -47,7 +47,7 @@ pub fn main() {
         println!("Evaluating a literal... ");
 
         let mut request = calculator.evaluate_request();
-        request.init().get_expression().set_literal(123.0);
+        request.init().init_expression().set_literal(123.0);
 
         let eval_promise = request.send();
 
@@ -84,7 +84,7 @@ pub fn main() {
 
         let mut request = calculator.evaluate_request();
 
-        let subtract_call = request.init().get_expression().init_call();
+        let subtract_call = request.init().init_expression().init_call();
         subtract_call.set_function(subtract);
         let subtract_params = subtract_call.init_params(2);
         subtract_params[1].set_literal(67.0);
@@ -129,7 +129,7 @@ pub fn main() {
         //# Build the request to evaluate 4 * 6
         let mut request = calculator.evaluate_request();
 
-        let multiply_call = request.init().get_expression().init_call();
+        let multiply_call = request.init().init_expression().init_call();
         multiply_call.set_function(multiply);
         let multiply_params = multiply_call.init_params(2);
         multiply_params[0].set_literal(4.0);
@@ -140,7 +140,7 @@ pub fn main() {
         //# Use the result in two calls that add 3 and 5.
 
         let mut add3_request = calculator.evaluate_request();
-        let add3_call = add3_request.init().get_expression().init_call();
+        let add3_call = add3_request.init().init_expression().init_call();
         add3_call.set_function(add.clone());
         let add3_params = add3_call.init_params(2);
         add3_params[0].set_previous_result(multiply_result.clone());
@@ -148,7 +148,7 @@ pub fn main() {
         let mut add3_promise = add3_request.send().pipeline.get_value().read_request().send();
 
         let mut add5_request = calculator.evaluate_request();
-        let add5_call = add5_request.init().get_expression().init_call();
+        let add5_call = add5_request.init().init_expression().init_call();
         add5_call.set_function(add);
         let add5_params = add5_call.init_params(2);
         add5_params[0].set_previous_result(multiply_result);
@@ -191,7 +191,7 @@ pub fn main() {
             let def_function_params = request.init();
             def_function_params.set_param_count(2);
             {
-                let add_call = def_function_params.get_body().init_call();
+                let add_call = def_function_params.init_body().init_call();
                 add_call.set_function(add.clone());
                 let add_params = add_call.init_params(2);
                 add_params[1].set_parameter(1);
@@ -210,7 +210,7 @@ pub fn main() {
             let def_function_params = request.init();
             def_function_params.set_param_count(1);
             {
-                let multiply_call = def_function_params.get_body().init_call();
+                let multiply_call = def_function_params.init_body().init_call();
                 multiply_call.set_function(multiply);
                 let multiply_params = multiply_call.init_params(2);
                 multiply_params[1].set_literal(2.0);
@@ -273,7 +273,7 @@ pub fn main() {
         };
 
         let mut request = calculator.evaluate_request();
-        let pow_call = request.init().get_expression().init_call();
+        let pow_call = request.init().init_expression().init_call();
         pow_call.set_function(FromServer::new(None::<EzRpcClient>, ~PowerFunction));
         let pow_params = pow_call.init_params(2);
         pow_params[0].set_literal(2.0);
