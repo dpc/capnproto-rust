@@ -92,8 +92,10 @@ impl Calculator::Function::Server for FunctionImpl {
     fn call(&mut self, mut context : Calculator::Function::CallContext) -> DecodeResult<()> {
         let (params, results) = context.get();
         let params = try!(params.get_params());
-        assert!(params.size() == self.param_count,
-                "Wrong number of parameters.");
+        if params.size() != self.param_count {
+            //"Wrong number of parameters.");
+            return Ok(context.fail());
+        }
 
         {
             let expression = try!(self.body.get_root::<Calculator::Expression::Builder>()).as_reader();
@@ -112,7 +114,10 @@ impl Calculator::Function::Server for OperatorImpl {
     fn call(&mut self, mut context : Calculator::Function::CallContext) -> DecodeResult<()> {
         let (params, results) = context.get();
         let params = try!(params.get_params());
-        assert!(params.size() == 2, "Wrong number of parameters: {}", params.size());
+        if params.size() != 2 {
+            // "Wrong number of parameters: {}", params.size());
+            return Ok(context.fail());
+        }
 
         let result = match self.op {
             Calculator::Operator::Add => params[0] + params[1],

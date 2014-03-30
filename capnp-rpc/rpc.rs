@@ -872,6 +872,12 @@ impl CallContextHook for RpcCallContext {
 
         (params, results)
     }
+
+    fn fail(~self) {
+        let ~RpcCallContext { params_message : _, results_message:_, rpc_chan:_, mut aborter} = self;
+        aborter.succeeded = false;
+    }
+
     fn done(~self) {
         let ~RpcCallContext { params_message : _, mut results_message, rpc_chan, mut aborter} = self;
         aborter.succeeded = true;
@@ -948,6 +954,10 @@ impl CallContextHook for PromisedAnswerRpcCallContext {
 
         (params, results)
     }
+    fn fail(~self) {
+        unimplemented!()
+    }
+
     fn done(~self) {
         let ~PromisedAnswerRpcCallContext {
             params_message : _, results_message, rpc_chan : _, answer_chan} = self;

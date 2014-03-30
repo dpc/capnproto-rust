@@ -38,7 +38,10 @@ impl LocalClient {
                     };
 
                     let context = CallContext { hook : context_hook };
-                    server.try_dispatch_call(interface_id, method_id, context)
+                    match server.dispatch_call(interface_id, method_id, context) {
+                        Ok(()) => {}
+                        Err(_e) => {} // hmm... presumably the server did not call context.done()
+                    };
                 }
             });
 
