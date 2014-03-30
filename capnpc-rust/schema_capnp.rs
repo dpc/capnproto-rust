@@ -63,39 +63,39 @@ pub mod Node {
       !self.reader.get_pointer_field(2).is_null()
     }
     #[inline]
-    pub fn which(&self) -> DecodeResult<WhichReader<'a>> {
+    pub fn which(&self) -> std::option::Option<WhichReader<'a>> {
       match self.reader.get_data_field::<u16>(6) {
         0 => {
-          return Ok(File(
+          return std::option::Some(File(
             ()
           ));
         }
         1 => {
-          return Ok(Struct(
+          return std::option::Some(Struct(
             FromStructReader::new(self.reader)
           ));
         }
         2 => {
-          return Ok(Enum(
+          return std::option::Some(Enum(
             FromStructReader::new(self.reader)
           ));
         }
         3 => {
-          return Ok(Interface(
+          return std::option::Some(Interface(
             FromStructReader::new(self.reader)
           ));
         }
         4 => {
-          return Ok(Const(
+          return std::option::Some(Const(
             FromStructReader::new(self.reader)
           ));
         }
         5 => {
-          return Ok(Annotation(
+          return std::option::Some(Annotation(
             FromStructReader::new(self.reader)
           ));
         }
-        d => return Err(UnsupportedVariant(d))
+        _ => return None,
       }
     }
   }
@@ -240,39 +240,39 @@ pub mod Node {
       FromStructBuilder::new(self.builder)
     }
     #[inline]
-    pub fn which(&self) -> DecodeResult<WhichBuilder<'a>> {
+    pub fn which(&self) -> std::option::Option<WhichBuilder<'a>> {
       match self.builder.get_data_field::<u16>(6) {
         0 => {
-          return Ok(File(
+          return std::option::Some(File(
             ()
           ));
         }
         1 => {
-          return Ok(Struct(
+          return std::option::Some(Struct(
             FromStructBuilder::new(self.builder)
           ));
         }
         2 => {
-          return Ok(Enum(
+          return std::option::Some(Enum(
             FromStructBuilder::new(self.builder)
           ));
         }
         3 => {
-          return Ok(Interface(
+          return std::option::Some(Interface(
             FromStructBuilder::new(self.builder)
           ));
         }
         4 => {
-          return Ok(Const(
+          return std::option::Some(Const(
             FromStructBuilder::new(self.builder)
           ));
         }
         5 => {
-          return Ok(Annotation(
+          return std::option::Some(Annotation(
             FromStructBuilder::new(self.builder)
           ));
         }
-        d => return Err(UnsupportedVariant(d))
+        _ => return None,
       }
     }
   }
@@ -721,14 +721,14 @@ pub mod Node {
     impl <'a> Reader<'a> {
       #[inline]
       pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Reader<'a>> {
-        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(3).get_struct( std::ptr::null()))))
+        match self.reader.get_pointer_field(3).get_struct( std::ptr::null()) { Ok(s) => Ok(FromStructReader::new(s)), Err(e) => Err(e),}
       }
       pub fn has_type(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
       }
       #[inline]
       pub fn get_value(&self) -> DecodeResult<schema_capnp::Value::Reader<'a>> {
-        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(4).get_struct( std::ptr::null()))))
+        match self.reader.get_pointer_field(4).get_struct( std::ptr::null()) { Ok(s) => Ok(FromStructReader::new(s)), Err(e) => Err(e),}
       }
       pub fn has_value(&self) -> bool {
         !self.reader.get_pointer_field(4).is_null()
@@ -747,7 +747,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Builder<'a>> {
-        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))))
+        match self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()) { Ok(s) => Ok(FromStructBuilder::new(s)), Err(e) => Err(e),}
       }
       #[inline]
       pub fn set_type(&self, value : schema_capnp::Type::Reader) {
@@ -762,7 +762,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_value(&self) -> DecodeResult<schema_capnp::Value::Builder<'a>> {
-        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(4).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()))))
+        match self.builder.get_pointer_field(4).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()) { Ok(s) => Ok(FromStructBuilder::new(s)), Err(e) => Err(e),}
       }
       #[inline]
       pub fn set_value(&self, value : schema_capnp::Value::Reader) {
@@ -819,7 +819,7 @@ pub mod Node {
     impl <'a> Reader<'a> {
       #[inline]
       pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Reader<'a>> {
-        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(3).get_struct( std::ptr::null()))))
+        match self.reader.get_pointer_field(3).get_struct( std::ptr::null()) { Ok(s) => Ok(FromStructReader::new(s)), Err(e) => Err(e),}
       }
       pub fn has_type(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -886,7 +886,7 @@ pub mod Node {
       }
       #[inline]
       pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Builder<'a>> {
-        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))))
+        match self.builder.get_pointer_field(3).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()) { Ok(s) => Ok(FromStructBuilder::new(s)), Err(e) => Err(e),}
       }
       #[inline]
       pub fn set_type(&self, value : schema_capnp::Type::Reader) {
@@ -1066,19 +1066,19 @@ pub mod Field {
       FromStructReader::new(self.reader)
     }
     #[inline]
-    pub fn which(&self) -> DecodeResult<WhichReader<'a>> {
+    pub fn which(&self) -> std::option::Option<WhichReader<'a>> {
       match self.reader.get_data_field::<u16>(4) {
         0 => {
-          return Ok(Slot(
+          return std::option::Some(Slot(
             FromStructReader::new(self.reader)
           ));
         }
         1 => {
-          return Ok(Group(
+          return std::option::Some(Group(
             FromStructReader::new(self.reader)
           ));
         }
-        d => return Err(UnsupportedVariant(d))
+        _ => return None,
       }
     }
   }
@@ -1170,19 +1170,19 @@ pub mod Field {
       FromStructBuilder::new(self.builder)
     }
     #[inline]
-    pub fn which(&self) -> DecodeResult<WhichBuilder<'a>> {
+    pub fn which(&self) -> std::option::Option<WhichBuilder<'a>> {
       match self.builder.get_data_field::<u16>(4) {
         0 => {
-          return Ok(Slot(
+          return std::option::Some(Slot(
             FromStructBuilder::new(self.builder)
           ));
         }
         1 => {
-          return Ok(Group(
+          return std::option::Some(Group(
             FromStructBuilder::new(self.builder)
           ));
         }
-        d => return Err(UnsupportedVariant(d))
+        _ => return None,
       }
     }
   }
@@ -1236,14 +1236,14 @@ pub mod Field {
       }
       #[inline]
       pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Reader<'a>> {
-        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(2).get_struct( std::ptr::null()))))
+        match self.reader.get_pointer_field(2).get_struct( std::ptr::null()) { Ok(s) => Ok(FromStructReader::new(s)), Err(e) => Err(e),}
       }
       pub fn has_type(&self) -> bool {
         !self.reader.get_pointer_field(2).is_null()
       }
       #[inline]
       pub fn get_default_value(&self) -> DecodeResult<schema_capnp::Value::Reader<'a>> {
-        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(3).get_struct( std::ptr::null()))))
+        match self.reader.get_pointer_field(3).get_struct( std::ptr::null()) { Ok(s) => Ok(FromStructReader::new(s)), Err(e) => Err(e),}
       }
       pub fn has_default_value(&self) -> bool {
         !self.reader.get_pointer_field(3).is_null()
@@ -1274,7 +1274,7 @@ pub mod Field {
       }
       #[inline]
       pub fn get_type(&self) -> DecodeResult<schema_capnp::Type::Builder<'a>> {
-        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(2).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))))
+        match self.builder.get_pointer_field(2).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()) { Ok(s) => Ok(FromStructBuilder::new(s)), Err(e) => Err(e),}
       }
       #[inline]
       pub fn set_type(&self, value : schema_capnp::Type::Reader) {
@@ -1289,7 +1289,7 @@ pub mod Field {
       }
       #[inline]
       pub fn get_default_value(&self) -> DecodeResult<schema_capnp::Value::Builder<'a>> {
-        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(3).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()))))
+        match self.builder.get_pointer_field(3).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()) { Ok(s) => Ok(FromStructBuilder::new(s)), Err(e) => Err(e),}
       }
       #[inline]
       pub fn set_default_value(&self, value : schema_capnp::Value::Reader) {
@@ -1413,19 +1413,19 @@ pub mod Field {
 
     impl <'a> Reader<'a> {
       #[inline]
-      pub fn which(&self) -> DecodeResult<WhichReader> {
+      pub fn which(&self) -> std::option::Option<WhichReader> {
         match self.reader.get_data_field::<u16>(5) {
           0 => {
-            return Ok(Implicit(
+            return std::option::Some(Implicit(
               ()
             ));
           }
           1 => {
-            return Ok(Explicit(
+            return std::option::Some(Explicit(
               self.reader.get_data_field::<u16>(6)
             ));
           }
-          d => return Err(UnsupportedVariant(d))
+          _ => return None,
         }
       }
     }
@@ -1450,19 +1450,19 @@ pub mod Field {
         self.builder.set_data_field::<u16>(6, value);
       }
       #[inline]
-      pub fn which(&self) -> DecodeResult<WhichBuilder> {
+      pub fn which(&self) -> std::option::Option<WhichBuilder> {
         match self.builder.get_data_field::<u16>(5) {
           0 => {
-            return Ok(Implicit(
+            return std::option::Some(Implicit(
               ()
             ));
           }
           1 => {
-            return Ok(Explicit(
+            return std::option::Some(Explicit(
               self.builder.get_data_field::<u16>(6)
             ));
           }
-          d => return Err(UnsupportedVariant(d))
+          _ => return None,
         }
       }
     }
@@ -1763,104 +1763,104 @@ pub mod Type {
 
   impl <'a> Reader<'a> {
     #[inline]
-    pub fn which(&self) -> DecodeResult<WhichReader<'a>> {
+    pub fn which(&self) -> std::option::Option<WhichReader<'a>> {
       match self.reader.get_data_field::<u16>(0) {
         0 => {
-          return Ok(Void(
+          return std::option::Some(Void(
             ()
           ));
         }
         1 => {
-          return Ok(Bool(
+          return std::option::Some(Bool(
             ()
           ));
         }
         2 => {
-          return Ok(Int8(
+          return std::option::Some(Int8(
             ()
           ));
         }
         3 => {
-          return Ok(Int16(
+          return std::option::Some(Int16(
             ()
           ));
         }
         4 => {
-          return Ok(Int32(
+          return std::option::Some(Int32(
             ()
           ));
         }
         5 => {
-          return Ok(Int64(
+          return std::option::Some(Int64(
             ()
           ));
         }
         6 => {
-          return Ok(Uint8(
+          return std::option::Some(Uint8(
             ()
           ));
         }
         7 => {
-          return Ok(Uint16(
+          return std::option::Some(Uint16(
             ()
           ));
         }
         8 => {
-          return Ok(Uint32(
+          return std::option::Some(Uint32(
             ()
           ));
         }
         9 => {
-          return Ok(Uint64(
+          return std::option::Some(Uint64(
             ()
           ));
         }
         10 => {
-          return Ok(Float32(
+          return std::option::Some(Float32(
             ()
           ));
         }
         11 => {
-          return Ok(Float64(
+          return std::option::Some(Float64(
             ()
           ));
         }
         12 => {
-          return Ok(Text(
+          return std::option::Some(Text(
             ()
           ));
         }
         13 => {
-          return Ok(Data(
+          return std::option::Some(Data(
             ()
           ));
         }
         14 => {
-          return Ok(List(
+          return std::option::Some(List(
             FromStructReader::new(self.reader)
           ));
         }
         15 => {
-          return Ok(Enum(
+          return std::option::Some(Enum(
             FromStructReader::new(self.reader)
           ));
         }
         16 => {
-          return Ok(Struct(
+          return std::option::Some(Struct(
             FromStructReader::new(self.reader)
           ));
         }
         17 => {
-          return Ok(Interface(
+          return std::option::Some(Interface(
             FromStructReader::new(self.reader)
           ));
         }
         18 => {
-          return Ok(AnyPointer(
+          return std::option::Some(AnyPointer(
             ()
           ));
         }
-        d => return Err(UnsupportedVariant(d))
+        _ => return None,
       }
     }
   }
@@ -1964,104 +1964,104 @@ pub mod Type {
       self.builder.set_data_field::<u16>(0, 18);
     }
     #[inline]
-    pub fn which(&self) -> DecodeResult<WhichBuilder<'a>> {
+    pub fn which(&self) -> std::option::Option<WhichBuilder<'a>> {
       match self.builder.get_data_field::<u16>(0) {
         0 => {
-          return Ok(Void(
+          return std::option::Some(Void(
             ()
           ));
         }
         1 => {
-          return Ok(Bool(
+          return std::option::Some(Bool(
             ()
           ));
         }
         2 => {
-          return Ok(Int8(
+          return std::option::Some(Int8(
             ()
           ));
         }
         3 => {
-          return Ok(Int16(
+          return std::option::Some(Int16(
             ()
           ));
         }
         4 => {
-          return Ok(Int32(
+          return std::option::Some(Int32(
             ()
           ));
         }
         5 => {
-          return Ok(Int64(
+          return std::option::Some(Int64(
             ()
           ));
         }
         6 => {
-          return Ok(Uint8(
+          return std::option::Some(Uint8(
             ()
           ));
         }
         7 => {
-          return Ok(Uint16(
+          return std::option::Some(Uint16(
             ()
           ));
         }
         8 => {
-          return Ok(Uint32(
+          return std::option::Some(Uint32(
             ()
           ));
         }
         9 => {
-          return Ok(Uint64(
+          return std::option::Some(Uint64(
             ()
           ));
         }
         10 => {
-          return Ok(Float32(
+          return std::option::Some(Float32(
             ()
           ));
         }
         11 => {
-          return Ok(Float64(
+          return std::option::Some(Float64(
             ()
           ));
         }
         12 => {
-          return Ok(Text(
+          return std::option::Some(Text(
             ()
           ));
         }
         13 => {
-          return Ok(Data(
+          return std::option::Some(Data(
             ()
           ));
         }
         14 => {
-          return Ok(List(
+          return std::option::Some(List(
             FromStructBuilder::new(self.builder)
           ));
         }
         15 => {
-          return Ok(Enum(
+          return std::option::Some(Enum(
             FromStructBuilder::new(self.builder)
           ));
         }
         16 => {
-          return Ok(Struct(
+          return std::option::Some(Struct(
             FromStructBuilder::new(self.builder)
           ));
         }
         17 => {
-          return Ok(Interface(
+          return std::option::Some(Interface(
             FromStructBuilder::new(self.builder)
           ));
         }
         18 => {
-          return Ok(AnyPointer(
+          return std::option::Some(AnyPointer(
             ()
           ));
         }
-        d => return Err(UnsupportedVariant(d))
+        _ => return None,
       }
     }
   }
@@ -2124,7 +2124,7 @@ pub mod Type {
     impl <'a> Reader<'a> {
       #[inline]
       pub fn get_element_type(&self) -> DecodeResult<schema_capnp::Type::Reader<'a>> {
-        Ok(FromStructReader::new(try!(self.reader.get_pointer_field(0).get_struct( std::ptr::null()))))
+        match self.reader.get_pointer_field(0).get_struct( std::ptr::null()) { Ok(s) => Ok(FromStructReader::new(s)), Err(e) => Err(e),}
       }
       pub fn has_element_type(&self) -> bool {
         !self.reader.get_pointer_field(0).is_null()
@@ -2143,7 +2143,7 @@ pub mod Type {
       }
       #[inline]
       pub fn get_element_type(&self) -> DecodeResult<schema_capnp::Type::Builder<'a>> {
-        Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(0).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()))))
+        match self.builder.get_pointer_field(0).get_struct(schema_capnp::Type::STRUCT_SIZE, std::ptr::null()) { Ok(s) => Ok(FromStructBuilder::new(s)), Err(e) => Err(e),}
       }
       #[inline]
       pub fn set_element_type(&self, value : schema_capnp::Type::Reader) {
@@ -2401,104 +2401,104 @@ pub mod Value {
       !self.reader.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn which(&self) -> DecodeResult<WhichReader<'a>> {
+    pub fn which(&self) -> std::option::Option<WhichReader<'a>> {
       match self.reader.get_data_field::<u16>(0) {
         0 => {
-          return Ok(Void(
+          return std::option::Some(Void(
             ()
           ));
         }
         1 => {
-          return Ok(Bool(
+          return std::option::Some(Bool(
             self.reader.get_bool_field(16)
           ));
         }
         2 => {
-          return Ok(Int8(
+          return std::option::Some(Int8(
             self.reader.get_data_field::<i8>(2)
           ));
         }
         3 => {
-          return Ok(Int16(
+          return std::option::Some(Int16(
             self.reader.get_data_field::<i16>(1)
           ));
         }
         4 => {
-          return Ok(Int32(
+          return std::option::Some(Int32(
             self.reader.get_data_field::<i32>(1)
           ));
         }
         5 => {
-          return Ok(Int64(
+          return std::option::Some(Int64(
             self.reader.get_data_field::<i64>(1)
           ));
         }
         6 => {
-          return Ok(Uint8(
+          return std::option::Some(Uint8(
             self.reader.get_data_field::<u8>(2)
           ));
         }
         7 => {
-          return Ok(Uint16(
+          return std::option::Some(Uint16(
             self.reader.get_data_field::<u16>(1)
           ));
         }
         8 => {
-          return Ok(Uint32(
+          return std::option::Some(Uint32(
             self.reader.get_data_field::<u32>(1)
           ));
         }
         9 => {
-          return Ok(Uint64(
+          return std::option::Some(Uint64(
             self.reader.get_data_field::<u64>(1)
           ));
         }
         10 => {
-          return Ok(Float32(
+          return std::option::Some(Float32(
             self.reader.get_data_field::<f32>(1)
           ));
         }
         11 => {
-          return Ok(Float64(
+          return std::option::Some(Float64(
             self.reader.get_data_field::<f64>(1)
           ));
         }
         12 => {
-          return Ok(Text(
+          return std::option::Some(Text(
             self.reader.get_pointer_field(0).get_text(std::ptr::null(), 0)
           ));
         }
         13 => {
-          return Ok(Data(
+          return std::option::Some(Data(
             self.reader.get_pointer_field(0).get_data(std::ptr::null(), 0)
           ));
         }
         14 => {
-          return Ok(List(
+          return std::option::Some(List(
             AnyPointer::Reader::new(self.reader.get_pointer_field(0))
           ));
         }
         15 => {
-          return Ok(Enum(
+          return std::option::Some(Enum(
             self.reader.get_data_field::<u16>(1)
           ));
         }
         16 => {
-          return Ok(Struct(
+          return std::option::Some(Struct(
             AnyPointer::Reader::new(self.reader.get_pointer_field(0))
           ));
         }
         17 => {
-          return Ok(Interface(
+          return std::option::Some(Interface(
             ()
           ));
         }
         18 => {
-          return Ok(AnyPointer(
+          return std::option::Some(AnyPointer(
             AnyPointer::Reader::new(self.reader.get_pointer_field(0))
           ));
         }
-        d => return Err(UnsupportedVariant(d))
+        _ => return None,
       }
     }
   }
@@ -2647,104 +2647,104 @@ pub mod Value {
       !self.builder.get_pointer_field(0).is_null()
     }
     #[inline]
-    pub fn which(&self) -> DecodeResult<WhichBuilder<'a>> {
+    pub fn which(&self) -> std::option::Option<WhichBuilder<'a>> {
       match self.builder.get_data_field::<u16>(0) {
         0 => {
-          return Ok(Void(
+          return std::option::Some(Void(
             ()
           ));
         }
         1 => {
-          return Ok(Bool(
+          return std::option::Some(Bool(
             self.builder.get_bool_field(16)
           ));
         }
         2 => {
-          return Ok(Int8(
+          return std::option::Some(Int8(
             self.builder.get_data_field::<i8>(2)
           ));
         }
         3 => {
-          return Ok(Int16(
+          return std::option::Some(Int16(
             self.builder.get_data_field::<i16>(1)
           ));
         }
         4 => {
-          return Ok(Int32(
+          return std::option::Some(Int32(
             self.builder.get_data_field::<i32>(1)
           ));
         }
         5 => {
-          return Ok(Int64(
+          return std::option::Some(Int64(
             self.builder.get_data_field::<i64>(1)
           ));
         }
         6 => {
-          return Ok(Uint8(
+          return std::option::Some(Uint8(
             self.builder.get_data_field::<u8>(2)
           ));
         }
         7 => {
-          return Ok(Uint16(
+          return std::option::Some(Uint16(
             self.builder.get_data_field::<u16>(1)
           ));
         }
         8 => {
-          return Ok(Uint32(
+          return std::option::Some(Uint32(
             self.builder.get_data_field::<u32>(1)
           ));
         }
         9 => {
-          return Ok(Uint64(
+          return std::option::Some(Uint64(
             self.builder.get_data_field::<u64>(1)
           ));
         }
         10 => {
-          return Ok(Float32(
+          return std::option::Some(Float32(
             self.builder.get_data_field::<f32>(1)
           ));
         }
         11 => {
-          return Ok(Float64(
+          return std::option::Some(Float64(
             self.builder.get_data_field::<f64>(1)
           ));
         }
         12 => {
-          return Ok(Text(
+          return std::option::Some(Text(
             self.builder.get_pointer_field(0).get_text(std::ptr::null(), 0)
           ));
         }
         13 => {
-          return Ok(Data(
+          return std::option::Some(Data(
             self.builder.get_pointer_field(0).get_data(std::ptr::null(), 0)
           ));
         }
         14 => {
-          return Ok(List(
+          return std::option::Some(List(
             AnyPointer::Builder::new(self.builder.get_pointer_field(0))
           ));
         }
         15 => {
-          return Ok(Enum(
+          return std::option::Some(Enum(
             self.builder.get_data_field::<u16>(1)
           ));
         }
         16 => {
-          return Ok(Struct(
+          return std::option::Some(Struct(
             AnyPointer::Builder::new(self.builder.get_pointer_field(0))
           ));
         }
         17 => {
-          return Ok(Interface(
+          return std::option::Some(Interface(
             ()
           ));
         }
         18 => {
-          return Ok(AnyPointer(
+          return std::option::Some(AnyPointer(
             AnyPointer::Builder::new(self.builder.get_pointer_field(0))
           ));
         }
-        d => return Err(UnsupportedVariant(d))
+        _ => return None,
       }
     }
   }
@@ -2816,7 +2816,7 @@ pub mod Annotation {
     }
     #[inline]
     pub fn get_value(&self) -> DecodeResult<schema_capnp::Value::Reader<'a>> {
-      Ok(FromStructReader::new(try!(self.reader.get_pointer_field(0).get_struct( std::ptr::null()))))
+      match self.reader.get_pointer_field(0).get_struct( std::ptr::null()) { Ok(s) => Ok(FromStructReader::new(s)), Err(e) => Err(e),}
     }
     pub fn has_value(&self) -> bool {
       !self.reader.get_pointer_field(0).is_null()
@@ -2847,7 +2847,7 @@ pub mod Annotation {
     }
     #[inline]
     pub fn get_value(&self) -> DecodeResult<schema_capnp::Value::Builder<'a>> {
-      Ok(FromStructBuilder::new(try!(self.builder.get_pointer_field(0).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()))))
+      match self.builder.get_pointer_field(0).get_struct(schema_capnp::Value::STRUCT_SIZE, std::ptr::null()) { Ok(s) => Ok(FromStructBuilder::new(s)), Err(e) => Err(e),}
     }
     #[inline]
     pub fn set_value(&self, value : schema_capnp::Value::Reader) {

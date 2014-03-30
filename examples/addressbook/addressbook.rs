@@ -67,19 +67,19 @@ pub mod addressbook {
                 println!("  {} phone: {}", type_name, try!(phone.get_number()));
             }
             match person.get_employment().which() {
-                Ok(Person::Employment::Unemployed(())) => {
+                Some(Person::Employment::Unemployed(())) => {
                     println!("  unemployed");
                 }
-                Ok(Person::Employment::Employer(Ok(employer))) => {
-                    println!("  employer: {}", employer);
+                Some(Person::Employment::Employer(employer)) => {
+                    println!("  employer: {}", try!(employer));
                 }
-                Ok(Person::Employment::School(Ok(school))) => {
-                    println!("  student at: {}", school);
+                Some(Person::Employment::School(school)) => {
+                    println!("  student at: {}", try!(school));
                 }
-                Ok(Person::Employment::SelfEmployed(())) => {
+                Some(Person::Employment::SelfEmployed(())) => {
                     println!("  self-employed");
                 }
-                _ => { }
+                None => { }
             }
         }
         Ok(())
