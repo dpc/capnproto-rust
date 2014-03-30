@@ -72,17 +72,18 @@ pub fn setup_request(rng : &mut FastRand, request : SearchResultList::Builder) -
 }
 
 pub fn handle_request(request : SearchResultList::Reader,
-                     response : SearchResultList::Builder) -> DecodeResult<()> {
+                      response : SearchResultList::Builder) -> DecodeResult<()> {
     let mut scoredResults : ~[ScoredResult] = ~[];
 
     let results = try!(request.get_results());
     for i in range(0, results.size()) {
         let result = results[i];
         let mut score = result.get_score();
-        if try!(result.get_snippet()).contains(" cat ") {
+        let snippet = try!(result.get_snippet());
+        if snippet.contains(" cat ") {
             score *= 10000.0;
         }
-        if try!(result.get_snippet()).contains(" dog ") {
+        if snippet.contains(" dog ") {
             score /= 10000.0;
         }
         scoredResults.push(ScoredResult {score : score, result : result});
