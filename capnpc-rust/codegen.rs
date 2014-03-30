@@ -851,7 +851,7 @@ fn generate_union(node_map : &HashMap<u64, schema_capnp::Node::Reader>,
                             else {box ""} );
 
 
-    getter_interior.push(Line(~"_ => return None,"));
+    getter_interior.push(Line(~"_ => return std::option::None,"));
 
     interior.push(
         Branch(vec!(Line(format!("pub enum {} \\{", enum_name)),
