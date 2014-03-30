@@ -7,7 +7,7 @@ pub mod Node {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::DecodeResult;
   use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
@@ -95,7 +95,7 @@ pub mod Node {
             FromStructReader::new(self.reader)
           ));
         }
-        _ => return None,
+        _ => return std::option::None,
       }
     }
   }
@@ -272,7 +272,7 @@ pub mod Node {
             FromStructBuilder::new(self.builder)
           ));
         }
-        _ => return None,
+        _ => return std::option::None,
       }
     }
   }
@@ -302,7 +302,7 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -392,7 +392,7 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -535,7 +535,7 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -606,7 +606,7 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -701,7 +701,7 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -799,7 +799,7 @@ pub mod Node {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -1017,7 +1017,7 @@ pub mod Field {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::DecodeResult;
   use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
@@ -1078,7 +1078,7 @@ pub mod Field {
             FromStructReader::new(self.reader)
           ));
         }
-        _ => return None,
+        _ => return std::option::None,
       }
     }
   }
@@ -1182,7 +1182,7 @@ pub mod Field {
             FromStructBuilder::new(self.builder)
           ));
         }
-        _ => return None,
+        _ => return std::option::None,
       }
     }
   }
@@ -1212,7 +1212,7 @@ pub mod Field {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -1334,7 +1334,7 @@ pub mod Field {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -1394,7 +1394,7 @@ pub mod Field {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -1425,7 +1425,7 @@ pub mod Field {
               self.reader.get_data_field::<u16>(6)
             ));
           }
-          _ => return None,
+          _ => return std::option::None,
         }
       }
     }
@@ -1462,7 +1462,7 @@ pub mod Field {
               self.builder.get_data_field::<u16>(6)
             ));
           }
-          _ => return None,
+          _ => return std::option::None,
         }
       }
     }
@@ -1490,7 +1490,7 @@ pub mod Enumerant {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::DecodeResult;
   use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
@@ -1603,7 +1603,7 @@ pub mod Method {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::DecodeResult;
   use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
@@ -1740,7 +1740,7 @@ pub mod Type {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::DecodeResult;
   use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
@@ -1860,7 +1860,7 @@ pub mod Type {
             ()
           ));
         }
-        _ => return None,
+        _ => return std::option::None,
       }
     }
   }
@@ -2061,7 +2061,7 @@ pub mod Type {
             ()
           ));
         }
-        _ => return None,
+        _ => return std::option::None,
       }
     }
   }
@@ -2104,7 +2104,7 @@ pub mod Type {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -2177,7 +2177,7 @@ pub mod Type {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -2237,7 +2237,7 @@ pub mod Type {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -2297,7 +2297,7 @@ pub mod Type {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -2358,7 +2358,7 @@ pub mod Value {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::DecodeResult;
   use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
@@ -2498,7 +2498,7 @@ pub mod Value {
             AnyPointer::Reader::new(self.reader.get_pointer_field(0))
           ));
         }
-        _ => return None,
+        _ => return std::option::None,
       }
     }
   }
@@ -2744,7 +2744,7 @@ pub mod Value {
             AnyPointer::Builder::new(self.builder.get_pointer_field(0))
           ));
         }
-        _ => return None,
+        _ => return std::option::None,
       }
     }
   }
@@ -2788,7 +2788,7 @@ pub mod Annotation {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::DecodeResult;
   use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
@@ -2903,7 +2903,7 @@ pub mod CodeGeneratorRequest {
   use capnp::capability::{FromClientHook, FromTypelessPipeline};
   use capnp::blob::{Text, Data};
   use capnp::layout;
-  use capnp::layout::{DecodeResult, UnsupportedVariant};
+  use capnp::layout::DecodeResult;
   use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
   use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
   use schema_capnp;
@@ -3004,7 +3004,7 @@ pub mod CodeGeneratorRequest {
     use capnp::capability::{FromClientHook, FromTypelessPipeline};
     use capnp::blob::{Text, Data};
     use capnp::layout;
-    use capnp::layout::{DecodeResult, UnsupportedVariant};
+    use capnp::layout::DecodeResult;
     use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
     use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
     use schema_capnp;
@@ -3116,7 +3116,7 @@ pub mod CodeGeneratorRequest {
       use capnp::capability::{FromClientHook, FromTypelessPipeline};
       use capnp::blob::{Text, Data};
       use capnp::layout;
-      use capnp::layout::{DecodeResult, UnsupportedVariant};
+      use capnp::layout::DecodeResult;
       use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};
       use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};
       use schema_capnp;

@@ -222,7 +222,7 @@ fn generate_import_statements(rootName : &str) -> FormattedText {
         Line(~"use capnp::capability::{FromClientHook, FromTypelessPipeline};"),
         Line(~"use capnp::blob::{Text, Data};"),
         Line(~"use capnp::layout;"),
-        Line(~"use capnp::layout::{DecodeResult, UnsupportedVariant};"),
+        Line(~"use capnp::layout::DecodeResult;"),
         Line(~"use capnp::layout::{FromStructBuilder, FromStructReader, ToStructReader};"),
         Line(~"use capnp::list::{PrimitiveList, ToU16, EnumList, StructList, TextList, DataList, ListList};"),
         Line(format!("use {};", rootName))

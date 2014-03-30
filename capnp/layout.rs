@@ -313,9 +313,8 @@ struct SegmentAnd<T> {
     value : T
 }
 
-pub enum DecodeError {
-    BadValue(&'static str),
-    UnsupportedVariant(u16),
+pub struct DecodeError {
+    message : &'static str,
 }
 
 pub type DecodeResult<T> = Result<T, DecodeError>;
@@ -331,14 +330,14 @@ mod WireHelpers {
     macro_rules! decode_require(
         ($condition:expr, $message:expr) => (
             if !($condition) {
-                return Err(BadValue($message));
+                return Err(DecodeError{ message: $message});
             }
             );
         )
 
     macro_rules! decode_require_fail(
         ($message:expr) => (
-                return Err(BadValue($message));
+                return Err(DecodeError{ message: $message});
             );
         )
 
