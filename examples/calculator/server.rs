@@ -8,6 +8,7 @@ use std;
 use std::vec::Vec;
 
 use capnp::capability::{FromServer, Server};
+use capnp::layout::{DecodeResult};
 use capnp::list::{PrimitiveList};
 use capnp::message::{MallocMessageBuilder, MessageBuilder};
 
@@ -28,10 +29,11 @@ impl ValueImpl {
 }
 
 impl Calculator::Value::Server for ValueImpl {
-    fn read(&mut self, mut context : Calculator::Value::ReadContext) {
+    fn read(&mut self, mut context : Calculator::Value::ReadContext) -> DecodeResult<()> {
         let (_, results) = context.get();
         results.set_value(self.value);
         context.done();
+        Ok(())
     }
 }
 
@@ -87,17 +89,18 @@ impl FunctionImpl {
 }
 
 impl Calculator::Function::Server for FunctionImpl {
-    fn call(&mut self, mut context : Calculator::Function::CallContext) {
+    fn call(&mut self, mut context : Calculator::Function::CallContext) -> DecodeResult<()> {
         let (params, results) = context.get();
-        let params = params.get_params().unwrap();
+        let params = try!(params.get_params());
         assert!(params.size() == self.param_count,
                 "Wrong number of parameters.");
 
         {
-            let expression = self.body.get_root::<Calculator::Expression::Builder>().unwrap().as_reader();
+            let expression = try!(self.body.get_root::<Calculator::Expression::Builder>()).as_reader();
             results.set_value(evaluate_impl(expression, Some(params)));
         }
         context.done();
+        Ok(())
     }
 }
 
@@ -106,9 +109,9 @@ pub struct OperatorImpl {
 }
 
 impl Calculator::Function::Server for OperatorImpl {
-    fn call(&mut self, mut context : Calculator::Function::CallContext) {
+    fn call(&mut self, mut context : Calculator::Function::CallContext) -> DecodeResult<()> {
         let (params, results) = context.get();
-        let params = params.get_params().unwrap();
+        let params = try!(params.get_params());
         assert!(params.size() == 2, "Wrong number of parameters: {}", params.size());
 
         let result = match self.op {
@@ -120,6 +123,7 @@ impl Calculator::Function::Server for OperatorImpl {
 
         results.set_value(result);
         context.done();
+        Ok(())
     }
 }
 
@@ -127,23 +131,25 @@ impl Calculator::Function::Server for OperatorImpl {
 struct CalculatorImpl;
 
 impl Calculator::Server for CalculatorImpl {
-    fn evaluate(&mut self, mut context : Calculator::EvaluateContext) {
+    fn evaluate(&mut self, mut context : Calculator::EvaluateContext) -> DecodeResult<()> {
         let (params, results) = context.get();
         results.set_value(
             FromServer::new(
                 None::<EzRpcServer>,
-                ~ValueImpl::new(evaluate_impl(params.get_expression().unwrap(), None))));
+                ~ValueImpl::new(evaluate_impl(try!(params.get_expression()), None))));
         context.done();
+        Ok(())
     }
-    fn def_function(&mut self, mut context : Calculator::DefFunctionContext) {
+    fn def_function(&mut self, mut context : Calculator::DefFunctionContext) -> DecodeResult<()> {
         let (params, results) = context.get();
         results.set_func(
             FromServer::new(
                 None::<EzRpcServer>,
-                ~FunctionImpl::new(params.get_param_count() as uint, params.get_body().unwrap())));
+                ~FunctionImpl::new(params.get_param_count() as uint, try!(params.get_body()))));
         context.done();
+        Ok(())
     }
-    fn get_operator(&mut self, mut context : Calculator::GetOperatorContext) {
+    fn get_operator(&mut self, mut context : Calculator::GetOperatorContext) -> DecodeResult<()> {
         let (params, results) = context.get();
         results.set_func(
             match params.get_op() {
@@ -155,6 +161,7 @@ impl Calculator::Server for CalculatorImpl {
                 None => fail!("Unknown operator."),
             });
         context.done();
+        Ok(())
     }
 }
 

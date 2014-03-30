@@ -1229,6 +1229,7 @@ fn generate_node(node_map : &HashMap<u64, schema_capnp::Node::Reader>,
             let mut dispatch_arms = Vec::new();
 
             mod_interior.push(Line(box "use capnp::any::AnyPointer;"));
+            mod_interior.push(Line(box "use capnp::layout::DecodeResult;"));
             mod_interior.push(
                 Line(box "use capnp::capability::{ClientHook, FromClientHook, FromServer, Request, ServerHook};"));
             mod_interior.push(Line(box "use capnp::capability;"));
@@ -1275,7 +1276,7 @@ fn generate_node(node_map : &HashMap<u64, schema_capnp::Node::Reader>,
                             capitalize_first_letter(name), params_name, results_name)));
                 server_interior.push(
                     Line(format!(
-                            "fn {}(&mut self, {}Context);",
+                            "fn {}(&mut self, {}Context) -> DecodeResult<()>;",
                             camel_to_snake_case(name), capitalize_first_letter(name)
                             )));
 
@@ -1355,13 +1356,13 @@ fn generate_node(node_map : &HashMap<u64, schema_capnp::Node::Reader>,
             mod_interior.push(
                 Branch(vec!(
                     Line(box "impl <T : Server> capability::Server for ServerDispatch<T> {"),
-                    Indent(box Line(box "fn dispatch_call(&mut self, interface_id : u64, method_id : u16, context : capability::CallContext<AnyPointer::Reader, AnyPointer::Builder>) {")),
+                    Indent(box Line(box "fn dispatch_call(&mut self, interface_id : u64, method_id : u16, context : capability::CallContext<AnyPointer::Reader, AnyPointer::Builder>) -> DecodeResult<()> {")),
                     Indent(box Indent(box Line(box "match interface_id {"))),
                     Indent(box Indent(box Indent(
                         box Line(format!("0x{:x} => ServerDispatch::<T>::dispatch_call_internal(self.server, method_id, context),",
                                                      node_id))))),
                     Indent(box Indent(box Indent(box Branch(base_dispatch_arms)))),
-                    Indent(box Indent(box Indent(box Line(box "_ => {}")))),
+                    Indent(box Indent(box Indent(box Line(box "_ => Ok(()),")))),
                     Indent(box Indent(box Line(box "}"))),
                     Indent(box Line(box "}")),
                     Line(box "}"))));
@@ -1369,10 +1370,10 @@ fn generate_node(node_map : &HashMap<u64, schema_capnp::Node::Reader>,
             mod_interior.push(
                 Branch(vec!(
                     Line(box "impl <T : Server> ServerDispatch<T> {"),
-                    Indent(box Line(box "pub fn dispatch_call_internal(server :&mut T, method_id : u16, context : capability::CallContext<AnyPointer::Reader, AnyPointer::Builder>) {")),
+                    Indent(box Line(box "pub fn dispatch_call_internal(server :&mut T, method_id : u16, context : capability::CallContext<AnyPointer::Reader, AnyPointer::Builder>) -> DecodeResult<()> {")),
                     Indent(box Indent(box Line(box "match method_id {"))),
                     Indent(box Indent(box Indent(box Branch(dispatch_arms)))),
-                    Indent(box Indent(box Indent(box Line(box "_ => {}")))),
+                    Indent(box Indent(box Indent(box Line(box "_ => Ok(()),")))),
                     Indent(box Indent(box Line(box "}"))),
                     Indent(box Line(box "}")),
                     Line(box "}"))));

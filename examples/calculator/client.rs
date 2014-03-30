@@ -6,6 +6,7 @@
 
 use std;
 use capnp::capability::{FromServer};
+use capnp::layout::DecodeResult;
 use capnp_rpc::ez_rpc::EzRpcClient;
 use capnp_rpc::capability::{InitRequest, WaitForContent};
 use calculator_capnp::Calculator;
@@ -13,12 +14,13 @@ use calculator_capnp::Calculator;
 pub struct PowerFunction;
 
 impl Calculator::Function::Server for PowerFunction {
-    fn call(&mut self, mut context : Calculator::Function::CallContext) {
+    fn call(&mut self, mut context : Calculator::Function::CallContext) -> DecodeResult<()> {
         let (params, results) = context.get();
-        let params = params.get_params().unwrap();
+        let params = try!(params.get_params());
         assert!(params.size() == 2, "Wrong number of parameters");
         results.set_value(std::f64::pow(params[0], params[1]));
         context.done();
+        Ok(())
     }
 }
 

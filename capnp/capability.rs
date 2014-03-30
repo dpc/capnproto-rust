@@ -6,7 +6,7 @@
 
 use any::{AnyPointer};
 use common::{MessageSize};
-use layout::{FromStructReader, FromStructBuilder, HasStructSize};
+use layout::{DecodeResult, FromStructReader, FromStructBuilder, HasStructSize};
 use message::{MallocMessageBuilder};
 use serialize::{OwnedSpaceMessageReader};
 use std;
@@ -117,7 +117,7 @@ pub trait Server {
             });
     }
     fn dispatch_call(&mut self, interface_id : u64, method_id : u16,
-                     context : CallContext<AnyPointer::Reader, AnyPointer::Builder>);
+                     context : CallContext<AnyPointer::Reader, AnyPointer::Builder>) -> DecodeResult<()>;
 
 }
 
