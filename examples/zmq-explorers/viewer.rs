@@ -1,4 +1,5 @@
 use capnp;
+use capnp::layout::DecodeResult;
 use zmq;
 use capnp_zmq;
 use std;
@@ -10,34 +11,34 @@ enum OutputMode {
     Confidence
 }
 
-fn write_ppm(path : &std::path::Path, grid : Grid::Reader, mode : OutputMode) {
+fn write_ppm(path : &std::path::Path, grid : Grid::Reader, mode : OutputMode) -> DecodeResult<()> {
     match std::io::File::open_mode(path, std::io::Truncate, std::io::Write) {
         Err(_e) => fail!("could not open"),
         Ok(writer) => {
             let mut buffered = std::io::BufferedWriter::new(writer);
             writeln!(&mut buffered, "P6");
 
-            let cells = grid.get_cells();
+            let cells = try!(grid.get_cells());
             let width = cells.size();
             assert!(width > 0);
-            let height = cells[0].size();
+            let height = try!(cells[0]).size();
 
             writeln!(&mut buffered, "{} {}", width, height);
             writeln!(&mut buffered, "255");
 
             for x in range(0, width) {
-                assert!(cells[x].size() == height);
+                assert!(try!(cells[x]).size() == height);
             }
 
             for y in range(0, height) {
                 for x in range(0, width) {
-                    let cell = cells[x][y];
+                    let cell = try!(cells[x])[y];
 
                     match mode {
                         Colors => {
-                            buffered.write_u8((cell.get_mean_red()).floor() as u8);
-                            buffered.write_u8((cell.get_mean_green()).floor() as u8);
-                            buffered.write_u8((cell.get_mean_blue()).floor() as u8);
+                            buffered.write_u8((cell.get_mean_red()).floor() as u8).unwrap();
+                            buffered.write_u8((cell.get_mean_green()).floor() as u8).unwrap();
+                            buffered.write_u8((cell.get_mean_blue()).floor() as u8).unwrap();
                         }
                         Confidence => {
                             let mut age = time::now().to_timespec().sec - cell.get_latest_timestamp();
@@ -50,22 +51,23 @@ fn write_ppm(path : &std::path::Path, grid : Grid::Reader, mode : OutputMode) {
                             n *= 10;
                             if n > 255 { n = 255 };
 
-                            buffered.write_u8(0 as u8);
+                            buffered.write_u8(0 as u8).unwrap();
 
-                            buffered.write_u8(n as u8);
+                            buffered.write_u8(n as u8).unwrap();
 
-                            buffered.write_u8(age as u8);
+                            buffered.write_u8(age as u8).unwrap();
                         }
                     }
                 }
             }
 
-            buffered.flush();
+            buffered.flush().unwrap();
         }
-    }
+    };
+    Ok(())
 }
 
-pub fn main() {
+pub fn main() -> DecodeResult<()> {
     use capnp::message::MessageReader;
 
     let mut context = zmq::Context::new();
@@ -76,21 +78,21 @@ pub fn main() {
     let mut c : uint = 0;
 
     loop {
-        requester.send([], 0);
+        requester.send([], 0).unwrap();
 
         let frames = capnp_zmq::recv(&mut requester).unwrap();
         let segments = capnp_zmq::frames_to_segments(frames);
         let reader = capnp::message::SegmentArrayMessageReader::new(segments,
                                                                     capnp::message::DefaultReaderOptions);
-        let grid = reader.get_root::<Grid::Reader>();
+        let grid = try!(reader.get_root::<Grid::Reader>());
 
         println!("{}", grid.get_latest_timestamp());
 
         let filename = std::path::Path::new(format!("colors{:05}.ppm", c));
-        write_ppm(&filename, grid, Colors);
+        try!(write_ppm(&filename, grid, Colors));
 
         let filename = std::path::Path::new(format!("conf{:05}.ppm", c));
-        write_ppm(&filename, grid, Confidence);
+        try!(write_ppm(&filename, grid, Confidence));
 
         c += 1;
         std::io::timer::sleep(5000);

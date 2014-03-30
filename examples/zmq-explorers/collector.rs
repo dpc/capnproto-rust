@@ -1,11 +1,12 @@
 use capnp;
+use capnp::layout::DecodeResult;
 use zmq;
 use capnp_zmq;
 
 static GRID_WIDTH : uint = 120;
 static GRID_HEIGHT : uint = 120;
 
-pub fn main() {
+pub fn main() -> DecodeResult<()> {
     use explorers_capnp::{Observation, Grid};
     use capnp::message::{MessageReader, MessageBuilder};
 
@@ -45,7 +46,7 @@ pub fn main() {
         if (poll_items[0].revents & zmq::POLLIN) != 0 {
 
             assert!(responder.recv_msg(0).is_ok());
-            capnp_zmq::send(&mut responder, &mut message);
+            capnp_zmq::send(&mut responder, &mut message).unwrap();
 
         } else if (poll_items[1].revents & zmq::POLLIN) != 0 {
 
@@ -56,18 +57,18 @@ pub fn main() {
             let reader = capnp::message::SegmentArrayMessageReader::new(
                 segments,
                 capnp::message::DefaultReaderOptions);
-            let obs = reader.get_root::<Observation::Reader>();
+            let obs = try!(reader.get_root::<Observation::Reader>());
 
             if obs.get_x() >= 1.0 || obs.get_x() < 0.0 ||
                 obs.get_y() >= 1.0 || obs.get_y() < 0.0 {
-                error!("out of range");
+                println!("out of range");
                 continue;
             }
 
             match obs.get_diagnostic().which() {
                 Some(Observation::Diagnostic::Ok(())) => {}
                 Some(Observation::Diagnostic::Warning(s)) => {
-                    println!("received diagnostic: {}", s);
+                    println!("received diagnostic: {}", try!(s));
                 }
                 None => {}
             }
@@ -78,7 +79,7 @@ pub fn main() {
             grid.set_latest_timestamp(obs.get_timestamp());
             grid.set_number_of_updates(grid.get_number_of_updates() + 1);
 
-            let cell = cells[x][y];
+            let cell = try!(cells[x])[y];
             cell.set_latest_timestamp(obs.get_timestamp());
 
             let n = cell.get_number_of_updates();
